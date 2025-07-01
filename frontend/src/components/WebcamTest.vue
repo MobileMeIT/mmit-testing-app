@@ -1,78 +1,67 @@
 <template>
-  <div class="webcam-test">
+  <div class="webcam-test-container">
     <div class="test-header">
-      <h3>📹 Webcam Test</h3>
-      <p>We'll test your camera to ensure it's working properly</p>
+      <h2><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-video"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg> Webcam Test</h2>
     </div>
 
-    <div class="test-content">
-      <div v-if="!permissionGranted && !permissionDenied" class="permission-request">
-        <div class="permission-icon">🔒</div>
-        <h4>Camera Permission Required</h4>
-        <p>Please allow camera access to test your webcam</p>
-        <button @click="requestPermission" class="permission-button">
+    <div class="test-area">
+      <!-- Permission Request State -->
+      <div v-if="!permissionGranted && !permissionDenied" class="state-panel permission-request">
+        <div class="panel-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-lock"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        </div>
+        <h3>Camera Permission Required</h3>
+        <p>Please allow camera access to test your webcam.</p>
+        <button @click="requestPermission" class="action-button primary">
           Grant Camera Access
         </button>
       </div>
 
-      <div v-else-if="permissionDenied" class="permission-denied">
-        <div class="error-icon">❌</div>
-        <h4>Camera Access Denied</h4>
-        <p>Camera access was denied. Please enable camera permissions in your browser settings and try again.</p>
-        <button @click="requestPermission" class="retry-button">
+      <!-- Permission Denied State -->
+      <div v-else-if="permissionDenied" class="state-panel permission-denied">
+        <div class="panel-icon error-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-x-circle"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+        </div>
+        <h3>Camera Access Denied</h3>
+        <p>Please enable camera permissions in your browser settings and try again.</p>
+        <button @click="requestPermission" class="action-button primary">
           Try Again
         </button>
       </div>
 
-      <div v-else class="camera-wrapper">
-        <div v-if="loading" class="overlay loading">
-          <div class="spinner"></div>
-          <p>Initializing camera...</p>
-          <button v-if="showRetryButton" @click="forceRetry" class="retry-button" style="margin-top: 1rem;">
-            Camera Taking Too Long? Try Again
-          </button>
-        </div>
-
-        <div v-if="error" class="overlay error">
-          <div class="error-icon">⚠️</div>
-          <h4>Camera Error</h4>
-          <p>{{ error }}</p>
-          <button @click="retryTest" class="retry-button">
-            Retry Test
-          </button>
-        </div>
-
-        <div class="camera-container">
+      <!-- Main Camera View -->
+      <div v-else class="camera-view">
+        <div class="video-container">
+          <div v-if="loading" class="video-overlay loading">
+            <div class="spinner"></div>
+            <p>Initializing camera...</p>
+          </div>
+          <div v-if="error" class="video-overlay error">
+             <div class="panel-icon error-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-alert-triangle"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            </div>
+            <h3>Camera Error</h3>
+            <p>{{ error }}</p>
+            <button @click="retryTest" class="action-button primary">Retry Test</button>
+          </div>
           <video
             ref="videoElement"
             autoplay
             muted
             playsinline
-            controls="false"
             class="camera-preview"
-            :class="{ hidden: loading || error }"
+            :class="{ blurred: loading || error }"
           ></video>
-          
-          <div class="camera-controls" :class="{ hidden: loading || error }">
-            <div class="status-indicator" :class="{ active: isStreaming }">
-              <div class="status-dot"></div>
-              <span>{{ isStreaming ? 'Camera Active' : 'Camera Inactive' }}</span>
-            </div>
-            
-            <div class="test-actions">
-              <button @click="completeTest" class="action-button success">
-                ✅ Working
-              </button>
-              <button @click="failTest" class="action-button danger">
-                ❌ Not Working
-              </button>
-            </div>
-          </div>
-
-          <div v-if="snapshotTaken" class="snapshot-preview" :class="{ hidden: loading || error }">
-            <h4>Test Photo Captured</h4>
-            <canvas ref="snapshotCanvas" class="snapshot-canvas"></canvas>
-          </div>
+        </div>
+        <div class="controls-bar">
+          <button @click="failTest" class="action-button danger">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-x"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            <span>Not Working</span>
+          </button>
+          <button @click="completeTest" class="action-button success">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-check"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>Working</span>
+          </button>
         </div>
       </div>
     </div>
@@ -89,7 +78,6 @@ export default {
       permissionDenied: false,
       loading: false,
       error: null,
-      isStreaming: false,
       snapshotTaken: false,
       showRetryButton: false,
       retryTimer: null
@@ -175,7 +163,6 @@ export default {
         const onVideoReady = () => {
           console.log('Video is ready!')
           this.loading = false
-          this.isStreaming = true
           this.clearRetryTimer()
         }
         
@@ -193,7 +180,6 @@ export default {
           if (this.loading) {
             console.log('Fallback: forcing camera ready state')
             this.loading = false
-            this.isStreaming = true
             this.clearRetryTimer()
           }
         }, 1500)
@@ -230,7 +216,6 @@ export default {
       this.error = null
       this.permissionDenied = false
       this.loading = false
-      this.isStreaming = false
       this.stopCamera()
       this.requestPermission()
     },
@@ -239,7 +224,6 @@ export default {
       if (this.stream) {
         this.stream.getTracks().forEach(track => track.stop())
         this.stream = null
-        this.isStreaming = false
       }
       this.clearRetryTimer()
     },
@@ -261,239 +245,193 @@ export default {
 </script>
 
 <style scoped>
-.webcam-test {
+.webcam-test-container {
   width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: #1e1e1e;
+  padding: 1.5rem;
+  box-sizing: border-box;
 }
 
 .test-header {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
+  flex-shrink: 0;
 }
 
-.test-header h3 {
+.test-header h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
   font-size: 1.5rem;
-  margin-bottom: 0.5rem;
-  color: #ffffff;
   font-weight: 600;
+  color: #e0e0e0;
 }
 
-.test-header p {
-  color: #cccccc;
+.test-area {
+  flex-grow: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #252526;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
 }
 
-.permission-request,
-.permission-denied,
-.loading,
-.error {
+/* --- State Panels (Permission, Error) --- */
+.state-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   padding: 2rem;
   color: #cccccc;
 }
 
-.permission-icon,
-.error-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-}
-
-.permission-request h4,
-.permission-denied h4,
-.error h4 {
-  margin-bottom: 1rem;
+.state-panel h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
   color: #ffffff;
-  font-weight: 600;
 }
 
-.permission-button,
-.retry-button {
-  padding: 0.8rem 2rem;
-  background: #ff6b00;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: 600;
+.state-panel p {
+  max-width: 350px;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
 }
 
-.permission-button:hover,
-.retry-button:hover {
-  background: #ff8533;
-  transform: translateY(-2px);
+.panel-icon {
+  margin-bottom: 1rem;
+  color: #ff6b00;
 }
 
-.loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
+.panel-icon.error-icon {
+  color: #dc3545;
 }
 
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid #333333;
-  border-top: 4px solid #ff6b00;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.camera-wrapper {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  background-color: #000;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  background-color: rgba(0, 0, 0, 0.7);
-  z-index: 10;
-  padding: 1rem;
-  text-align: center;
-}
-
-.camera-container {
+/* --- Main Camera View --- */
+.camera-view {
   width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
 }
 
+.video-container {
+  flex-grow: 1;
+  position: relative;
+  background-color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .camera-preview {
   width: 100%;
-  flex-grow: 1;
+  height: 100%;
   object-fit: contain;
-  border-radius: 8px 8px 0 0;
-  background: #000;
-  transition: opacity 0.3s ease;
+  transition: filter 0.3s ease;
 }
 
-.camera-preview.hidden,
-.camera-controls.hidden,
-.snapshot-preview.hidden {
-  opacity: 0;
-  pointer-events: none;
+.camera-preview.blurred {
+  filter: blur(8px);
 }
 
-.camera-controls {
-  background: #1f1f1f;
-  padding: 0.75rem 1rem;
+.video-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
   align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  text-align: center;
+  padding: 1rem;
 }
 
-.status-indicator {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  background: #333333;
-  font-size: 0.9rem;
-  color: #cccccc;
-  border: 1px solid #555555;
+.video-overlay.error .panel-icon {
+  margin-bottom: 0.5rem;
 }
 
-.status-indicator.active {
-  background: rgba(255, 107, 0, 0.1);
-  color: #ff6b00;
-  border: 1px solid #ff6b00;
-}
 
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #ccc;
-}
-
-.status-indicator.active .status-dot {
-  background: #ff6b00;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.5; }
-  100% { opacity: 1; }
-}
-
-.test-actions {
+/* --- Controls Bar --- */
+.controls-bar {
+  flex-shrink: 0;
   display: flex;
   justify-content: center;
+  align-items: center;
   gap: 1rem;
+  padding: 1rem;
+  background-color: #2c2c2e;
+  border-top: 1px solid #444;
 }
 
+
+/* --- Common Elements --- */
 .action-button {
-  padding: 0.8rem 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 6px;
   border: none;
-  border-radius: 8px;
-  font-size: 0.9rem;
   cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: 500;
+  transition: all 0.2s ease;
+  color: white;
+}
+
+.action-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.action-button.primary {
+  background-color: #ff6b00;
+}
+.action-button.primary:hover {
+  background-color: #e65c00;
 }
 
 .action-button.success {
-  background: #ff6b00;
-  color: white;
+  background-color: #28a745;
+}
+.action-button.success:hover {
+  background-color: #218838;
 }
 
 .action-button.danger {
-  background: #f44336;
-  color: white;
+  background-color: #dc3545;
+}
+.action-button.danger:hover {
+  background-color: #c82333;
 }
 
-.action-button:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+.spinner {
+  border: 4px solid rgba(255, 255, 255, 0.2);
+  border-left-color: #ff6b00;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
 }
 
-.action-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.snapshot-preview {
-  margin-top: 1.5rem;
-  text-align: center;
-}
-
-.snapshot-canvas {
-  max-width: 320px;
-  height: auto;
-  border-radius: 8px;
-  border: 1px solid #333;
-}
-
-@media (max-width: 768px) {
-  .test-actions {
-    flex-direction: column;
-    align-items: center;
-  }
-  
-  .action-button {
-    width: 100%;
-    max-width: 250px;
-  }
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 </style> 
