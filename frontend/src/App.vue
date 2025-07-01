@@ -36,18 +36,18 @@
       </nav>
        <div class="sidebar-footer">
           <div class="detailed-summary">
-            <h4>Test Summary</h4>
+            <h4>Summary</h4>
             <p>Completed: {{ completedTestsCount }}/{{ totalTestsCount }}</p>
             <div v-if="passedTests.length > 0" class="result-list passed">
                 <p>Passed: {{ passedTests.length }}</p>
                 <ul>
-                    <li v-for="test in passedTests" :key="test">{{ testNameMap[test] }}</li>
+                    <li v-for="test in passedTests" :key="test">› {{ testNameMap[test] }}</li>
                 </ul>
             </div>
             <div v-if="failedTests.length > 0" class="result-list failed">
                 <p>Failed: {{ failedTests.length }}</p>
                 <ul>
-                    <li v-for="test in failedTests" :key="test">{{ testNameMap[test] }}</li>
+                    <li v-for="test in failedTests" :key="test">› {{ testNameMap[test] }}</li>
                 </ul>
             </div>
           </div>
@@ -408,45 +408,53 @@ export default {
 
 /* New Detailed Summary Styles */
 .detailed-summary {
-  padding: 0.75rem;
-  border: 1px solid #262626;
-  border-radius: 6px;
+  width: 100%;
+  padding: 1rem;
+  background-color: #252526;
+  border-radius: 8px;
   margin-bottom: 1rem;
-  background: #1a1a1a;
 }
+
 .detailed-summary h4 {
-  margin: 0 0 0.5rem 0;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #f0f0f0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    text-align: center;
 }
-.detailed-summary p {
-  margin: 0 0 0.5rem 0;
-  font-size: 0.8rem;
-  color: #a0a0a0;
+
+.detailed-summary > p {
+    font-size: 0.9rem;
+    color: #a0a0a0;
+    text-align: center;
+    margin-bottom: 1rem;
 }
+
 .result-list {
-    margin-top: 0.5rem;
+    margin-bottom: 0.75rem;
 }
+
 .result-list p {
-    font-weight: 500;
     margin-bottom: 0.25rem;
+    font-weight: 500;
 }
-.result-list.passed p {
-    color: #48bb78;
-}
-.result-list.failed p {
-    color: #e53e3e;
-}
+
 .result-list ul {
-  list-style: none;
-  padding-left: 0.75rem;
-  margin: 0;
-  font-size: 0.75rem;
-  color: #a0a0a0;
+    list-style-type: none;
+    padding-left: 0;
+    margin-top: 0.25rem;
+    font-size: 0.9rem;
 }
-.result-list ul li::before {
-  content: '› ';
-  color: #ff6b00;
+
+.result-list li {
+    padding: 0.2rem 0.5rem;
+    color: #c0c0c0;
+}
+
+.result-list.passed p {
+    color: #28a745;
+}
+
+.result-list.failed p {
+    color: #dc3545;
 }
 </style> 

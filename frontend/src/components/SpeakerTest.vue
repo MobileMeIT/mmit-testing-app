@@ -1,16 +1,31 @@
 <template>
-  <div class="speaker-test">
+  <div class="speaker-test-container">
     <div class="test-header">
-      <h3>🔊 Speaker Test</h3>
-      <p>We'll test your speakers to ensure they're working properly</p>
+      <h2><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-volume-2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg> Speaker Test</h2>
     </div>
 
-    <div class="test-content">
-      <div class="speaker-container">
-        <div class="volume-controls">
-          <h4>Volume Control</h4>
-          <div class="volume-slider-container">
-            <span class="volume-label">🔈</span>
+    <div class="test-area">
+      <div class="speaker-view">
+        <div class="main-content">
+          <div class="panel-icon">
+             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-play-circle"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
+          </div>
+          <h3>Test your Speakers</h3>
+          <p>Click the button below to play a test sound. The sound will play on the left, then right, then both speakers.</p>
+
+          <button @click="playFullTest" class="action-button primary large" :disabled="isPlaying">
+            <span v-if="!isPlaying">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-play"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+              Play Sound
+            </span>
+            <span v-else class="playing-indicator">
+              <div class="audio-wave"></div>
+              Playing ({{ currentTestStep }})
+            </span>
+          </button>
+
+          <div class="volume-control">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-volume-1"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
             <input 
               type="range" 
               min="0" 
@@ -18,109 +33,21 @@
               v-model="volume" 
               class="volume-slider"
               @input="updateVolume"
+              :disabled="isPlaying"
             />
-            <span class="volume-label">🔊</span>
-          </div>
-          <div class="volume-display">Volume: {{ volume }}%</div>
-        </div>
-
-        <div class="test-tones">
-          <h4>Test Audio</h4>
-          <div class="tone-buttons">
-            <button 
-              @click="playTone('left')" 
-              class="tone-button"
-              :class="{ playing: playingTone === 'left' }"
-            >
-              🎵 Left Channel
-            </button>
-            <button 
-              @click="playTone('right')" 
-              class="tone-button"
-              :class="{ playing: playingTone === 'right' }"
-            >
-              🎵 Right Channel
-            </button>
-            <button 
-              @click="playTone('both')" 
-              class="tone-button"
-              :class="{ playing: playingTone === 'both' }"
-            >
-              🎵 Both Channels
-            </button>
-            <button 
-              @click="playTone('sweep')" 
-              class="tone-button"
-              :class="{ playing: playingTone === 'sweep' }"
-            >
-              🎵 Frequency Sweep
-            </button>
-          </div>
-          
-          <div v-if="playingTone" class="playing-indicator">
-            <div class="audio-wave"></div>
-            <span>Playing {{ playingTone === 'both' ? 'stereo' : playingTone }} test tone...</span>
-            <button @click="stopTone" class="stop-button">⏹️ Stop</button>
+             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-volume-2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
           </div>
         </div>
-
-        <div class="speaker-check">
-          <h4>Speaker Check</h4>
-          <div class="check-questions">
-            <div class="question">
-              <label class="checkbox-container">
-                <input type="checkbox" v-model="canHearLeft">
-                <span class="checkmark"></span>
-                I can hear sound from the left speaker/earphone
-              </label>
-            </div>
-            <div class="question">
-              <label class="checkbox-container">
-                <input type="checkbox" v-model="canHearRight">
-                <span class="checkmark"></span>
-                I can hear sound from the right speaker/earphone
-              </label>
-            </div>
-            <div class="question">
-              <label class="checkbox-container">
-                <input type="checkbox" v-model="soundQuality">
-                <span class="checkmark"></span>
-                The sound quality is clear without distortion
-              </label>
-            </div>
-            <div class="question">
-              <label class="checkbox-container">
-                <input type="checkbox" v-model="volumeWorking">
-                <span class="checkmark"></span>
-                Volume controls work properly
-              </label>
-            </div>
-          </div>
-        </div>
-
-        <div class="test-actions">
-          <button 
-            @click="completeTest" 
-            class="action-button success" 
-            :disabled="!allChecksCompleted"
-          >
-            ✅ Speakers Work Fine
+        
+        <div class="controls-bar">
+          <button @click="failTest" class="action-button danger" :disabled="isPlaying">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-x"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            <span>Not Working</span>
           </button>
-          <button @click="failTest" class="action-button danger">
-            ❌ Speakers Not Working
+          <button @click="completeTest" class="action-button success" :disabled="isPlaying">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-check"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>Working</span>
           </button>
-        </div>
-
-        <div class="test-instructions">
-          <h4>Testing Instructions:</h4>
-          <ol>
-            <li>Adjust the volume to a comfortable level</li>
-            <li>Test each channel (left/right) individually</li>
-            <li>Test both channels together</li>
-            <li>Try the frequency sweep to test different tones</li>
-            <li>Check all boxes that apply to your experience</li>
-            <li>Click "Speakers Work Fine" if everything sounds good</li>
-          </ol>
         </div>
       </div>
     </div>
@@ -133,20 +60,14 @@ export default {
   data() {
     return {
       volume: 50,
-      playingTone: null,
+      isPlaying: false,
+      currentTestStep: '',
       audioContext: null,
       oscillator: null,
       gainNode: null,
       panNode: null,
-      canHearLeft: false,
-      canHearRight: false,
-      soundQuality: false,
-      volumeWorking: false
-    }
-  },
-  computed: {
-    allChecksCompleted() {
-      return this.canHearLeft && this.canHearRight && this.soundQuality && this.volumeWorking
+      testSequence: ['Left', 'Right', 'Both'],
+      testTimeout: null
     }
   },
   mounted() {
@@ -158,114 +79,81 @@ export default {
   methods: {
     initializeAudioContext() {
       try {
-        this.audioContext = new (window.AudioContext || window.webkitAudioContext)()
+        if (!this.audioContext || this.audioContext.state === 'closed') {
+          this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
       } catch (err) {
-        console.error('Audio context initialization error:', err)
+        console.error('Audio context initialization error:', err);
       }
     },
-
+    
     updateVolume() {
       if (this.gainNode) {
-        this.gainNode.gain.value = this.volume / 100
+        this.gainNode.gain.setValueAtTime(this.volume / 100, this.audioContext.currentTime);
       }
     },
 
-    async playTone(type) {
-      if (this.playingTone) {
-        this.stopTone()
-      }
+    async playFullTest() {
+      if (this.isPlaying) return;
+      this.isPlaying = true;
 
-      if (!this.audioContext) {
-        this.initializeAudioContext()
-      }
-
-      // Resume audio context if suspended
-      if (this.audioContext.state === 'suspended') {
-        await this.audioContext.resume()
-      }
-
-      this.playingTone = type
-
-      if (type === 'sweep') {
-        this.playSweep()
-      } else {
-        this.playStandardTone(type)
-      }
-    },
-
-    playStandardTone(type) {
-      this.oscillator = this.audioContext.createOscillator()
-      this.gainNode = this.audioContext.createGain()
-      this.panNode = this.audioContext.createStereoPanner()
-
-      // Set frequency (440Hz = A4 note)
-      this.oscillator.frequency.setValueAtTime(440, this.audioContext.currentTime)
-      this.oscillator.type = 'sine'
-
-      // Set pan based on type
-      if (type === 'left') {
-        this.panNode.pan.setValueAtTime(-1, this.audioContext.currentTime)
-      } else if (type === 'right') {
-        this.panNode.pan.setValueAtTime(1, this.audioContext.currentTime)
-      } else {
-        this.panNode.pan.setValueAtTime(0, this.audioContext.currentTime)
-      }
-
-      // Set volume
-      this.gainNode.gain.setValueAtTime(this.volume / 100, this.audioContext.currentTime)
-
-      // Connect nodes
-      this.oscillator.connect(this.gainNode)
-      this.gainNode.connect(this.panNode)
-      this.panNode.connect(this.audioContext.destination)
-
-      // Start playing
-      this.oscillator.start()
-
-      // Auto-stop after 3 seconds
-      setTimeout(() => {
-        if (this.playingTone === type) {
-          this.stopTone()
+      for (let i = 0; i < this.testSequence.length; i++) {
+        const step = this.testSequence[i];
+        this.currentTestStep = step;
+        await this.playSound(step);
+        if (!this.isPlaying) break; 
+        if (i < this.testSequence.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 500)); // Pause between sounds
         }
-      }, 3000)
+      }
+
+      this.stopSound();
     },
 
-    playSweep() {
-      this.oscillator = this.audioContext.createOscillator()
-      this.gainNode = this.audioContext.createGain()
+    async playSound(type) {
+        if (!this.audioContext) this.initializeAudioContext();
+        if (this.audioContext.state === 'suspended') await this.audioContext.resume();
 
-      this.oscillator.type = 'sine'
-      this.gainNode.gain.setValueAtTime(this.volume / 100, this.audioContext.currentTime)
+        this.stopSound(false); // Stop previous sound without setting isPlaying to false
 
-      // Frequency sweep from 200Hz to 2000Hz over 5 seconds
-      this.oscillator.frequency.setValueAtTime(200, this.audioContext.currentTime)
-      this.oscillator.frequency.exponentialRampToValueAtTime(2000, this.audioContext.currentTime + 5)
+        return new Promise(resolve => {
+            this.oscillator = this.audioContext.createOscillator();
+            this.gainNode = this.audioContext.createGain();
+            this.panNode = this.audioContext.createStereoPanner();
 
-      this.oscillator.connect(this.gainNode)
-      this.gainNode.connect(this.audioContext.destination)
+            this.oscillator.type = 'sine';
+            this.oscillator.frequency.setValueAtTime(440, this.audioContext.currentTime);
 
-      this.oscillator.start()
+            if (type === 'Left') this.panNode.pan.setValueAtTime(-1, this.audioContext.currentTime);
+            else if (type === 'Right') this.panNode.pan.setValueAtTime(1, this.audioContext.currentTime);
+            else this.panNode.pan.setValueAtTime(0, this.audioContext.currentTime);
 
-      // Auto-stop after 5 seconds
-      setTimeout(() => {
-        if (this.playingTone === 'sweep') {
-          this.stopTone()
+            this.updateVolume();
+
+            this.oscillator.connect(this.gainNode).connect(this.panNode).connect(this.audioContext.destination);
+            this.oscillator.start();
+
+            this.testTimeout = setTimeout(() => {
+                this.stopSound(false);
+                resolve();
+            }, 1500); // Play each sound for 1.5 seconds
+        });
+    },
+
+    stopSound(endTest = true) {
+        if (this.testTimeout) {
+            clearTimeout(this.testTimeout);
+            this.testTimeout = null;
         }
-      }, 5000)
-    },
-
-    stopTone() {
-      if (this.oscillator) {
-        this.oscillator.stop()
-        this.oscillator = null
-      }
-      if (this.gainNode) {
-        this.gainNode = null
-      }
-      if (this.panNode) {
-        this.panNode = null
-      }
-      this.playingTone = null
+        if (this.oscillator) {
+            this.oscillator.stop();
+            this.oscillator.disconnect();
+            this.oscillator = null;
+        }
+        if(endTest){
+            this.isPlaying = false;
+            this.currentTestStep = '';
+        }
     },
 
     completeTest() {
@@ -279,11 +167,9 @@ export default {
     },
 
     cleanup() {
-      this.stopTone()
-
+      this.stopSound();
       if (this.audioContext && this.audioContext.state !== 'closed') {
         this.audioContext.close()
-        this.audioContext = null
       }
     }
   }
@@ -291,308 +177,224 @@ export default {
 </script>
 
 <style scoped>
-.speaker-test {
+.speaker-test-container {
   width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
 }
 
 .test-header {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
+  flex-shrink: 0;
 }
 
-.test-header h3 {
+.test-header h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
   font-size: 1.5rem;
-  margin-bottom: 0.5rem;
-  color: #ffffff;
   font-weight: 600;
+  color: #e0e0e0;
 }
 
-.test-header p {
-  color: #cccccc;
+.test-area {
+  flex-grow: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #252526;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
 }
 
-.speaker-container {
+/* --- Main Speaker View --- */
+.speaker-view {
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
 }
 
-.volume-controls {
-  background: #262626;
-  padding: 1.5rem;
-  border-radius: 8px;
-  border: 1px solid #333333;
-  text-align: center;
-}
-
-.volume-controls h4 {
-  margin-bottom: 1rem;
-  color: #ffffff;
-  font-weight: 600;
-}
-
-.volume-slider-container {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  justify-content: center;
-  margin-bottom: 0.5rem;
-}
-
-.volume-slider {
-  width: 200px;
-  height: 6px;
-  border-radius: 3px;
-  background: #ddd;
-  outline: none;
-  -webkit-appearance: none;
-}
-
-.volume-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #ff6b00;
-  cursor: pointer;
-}
-
-.volume-slider::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #ff6b00;
-  cursor: pointer;
-  border: none;
-}
-
-.volume-label {
-  font-size: 1.2rem;
-}
-
-.volume-display {
-  font-weight: 500;
-  color: #ffffff;
-}
-
-.test-tones {
-  background: #262626;
-  padding: 1.5rem;
-  border-radius: 8px;
-  border: 1px solid #333333;
-}
-
-.test-tones h4 {
-  margin-bottom: 1rem;
-  color: #ffffff;
-  font-weight: 600;
-  text-align: center;
-}
-
-.tone-buttons {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.tone-button {
-  padding: 0.8rem 1rem;
-  border: none;
-  border-radius: 8px;
-  background: #ff6b00;
-  color: white;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 0.9rem;
-  font-weight: 600;
-}
-
-.tone-button:hover {
-  background: #ff8533;
-  transform: translateY(-2px);
-}
-
-.tone-button.playing {
-  background: #f44336;
-  animation: playingPulse 1s infinite;
-}
-
-@keyframes playingPulse {
-  0% { box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.7); }
-  70% { box-shadow: 0 0 0 10px rgba(244, 67, 54, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(244, 67, 54, 0); }
-}
-
-.playing-indicator {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  padding: 1rem;
-  background: rgba(244, 67, 54, 0.1);
-  border-radius: 8px;
-  color: #f44336;
-}
-
-.audio-wave {
-  width: 20px;
-  height: 20px;
-  background: linear-gradient(45deg, #f44336 25%, transparent 25%),
-              linear-gradient(-45deg, #f44336 25%, transparent 25%),
-              linear-gradient(45deg, transparent 75%, #f44336 75%),
-              linear-gradient(-45deg, transparent 75%, #f44336 75%);
-  background-size: 4px 4px;
-  background-position: 0 0, 0 2px, 2px -2px, -2px 0px;
-  animation: wave 1s linear infinite;
-}
-
-@keyframes wave {
-  0% { background-position: 0 0, 0 2px, 2px -2px, -2px 0px; }
-  100% { background-position: 4px 0, 4px 2px, 6px -2px, 2px 0px; }
-}
-
-.stop-button {
-  padding: 0.5rem 1rem;
-  background: #f44336;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.8rem;
-}
-
-.speaker-check {
-  background: #262626;
-  padding: 1.5rem;
-  border-radius: 8px;
-  border-left: 4px solid #ff6b00;
-  border: 1px solid #333333;
-}
-
-.speaker-check h4 {
-  margin-bottom: 1rem;
-  color: #ff6b00;
-  font-weight: 600;
-}
-
-.check-questions {
+.main-content {
+  flex-grow: 1;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-}
-
-.question {
-  display: flex;
-  align-items: center;
-}
-
-.checkbox-container {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  font-size: 0.95rem;
-  color: #cccccc;
-}
-
-.checkbox-container input {
-  margin-right: 0.8rem;
-  transform: scale(1.2);
-  accent-color: #ff6b00;
-}
-
-.test-actions {
-  display: flex;
-  gap: 1rem;
   justify-content: center;
-  flex-wrap: wrap;
-}
-
-.action-button {
-  padding: 0.8rem 1.5rem;
-  border: none;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: 500;
-}
-
-.action-button.success {
-  background: #ff6b00;
-  color: white;
-}
-
-.action-button.danger {
-  background: #f44336;
-  color: white;
-}
-
-.action-button:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.action-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.test-instructions {
-  background: #262626;
-  padding: 1.5rem;
-  border-radius: 8px;
-  border-left: 4px solid #ff6b00;
-  border: 1px solid #333333;
-}
-
-.test-instructions h4 {
-  margin-bottom: 1rem;
-  color: #ff6b00;
-  font-weight: 600;
-}
-
-.test-instructions ol {
+  align-items: center;
+  text-align: center;
+  padding: 2rem;
   color: #cccccc;
+}
+
+.main-content h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  color: #ffffff;
+}
+
+.main-content p {
+  max-width: 400px;
+  margin-bottom: 1.5rem;
   line-height: 1.6;
 }
 
-.test-instructions li {
-  margin-bottom: 0.5rem;
+.panel-icon {
+  margin-bottom: 1rem;
+  color: #ff6b00;
 }
 
-@media (max-width: 768px) {
-  .speaker-container {
-    gap: 1.5rem;
-  }
-  
-  .volume-slider-container {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  
-  .volume-slider {
-    width: 250px;
-  }
-  
-  .tone-buttons {
-    grid-template-columns: 1fr;
-  }
-  
-  .playing-indicator {
-    flex-direction: column;
-    text-align: center;
-  }
-  
-  .test-actions {
-    flex-direction: column;
+.action-button.large {
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    min-width: 200px;
+    height: 50px;
+}
+
+.playing-indicator {
+    display: flex;
     align-items: center;
-  }
-  
-  .action-button {
+    gap: 0.75rem;
+}
+
+.audio-wave {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.audio-wave::before,
+.audio-wave::after {
+  content: '';
+  width: 5px;
+  height: 100%;
+  background-color: white;
+  animation: wave 1s infinite ease-in-out;
+}
+
+.audio-wave::after {
+  animation-delay: -0.5s;
+}
+
+@keyframes wave {
+  0%, 100% { height: 5%; }
+  50% { height: 100%; }
+}
+
+.volume-control {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 2rem;
     width: 100%;
-    max-width: 250px;
-  }
+    max-width: 300px;
+    color: #999;
+}
+
+.volume-slider {
+    flex-grow: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 8px;
+    background: #444;
+    border-radius: 5px;
+    outline: none;
+    opacity: 0.9;
+    transition: opacity .2s;
+}
+
+.volume-slider:hover {
+    opacity: 1;
+}
+
+.volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: #ff6b00;
+    cursor: pointer;
+    border-radius: 50%;
+}
+
+.volume-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: #ff6b00;
+    cursor: pointer;
+    border-radius: 50%;
+}
+
+
+/* --- Controls Bar --- */
+.controls-bar {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1rem;
+  background-color: #2c2c2e;
+  border-top: 1px solid #444;
+}
+
+.button-group {
+    display: flex;
+    gap: 1rem;
+}
+
+/* --- Common Elements --- */
+.action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: white;
+}
+
+.action-button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.action-button:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.action-button.primary {
+  background-color: #ff6b00;
+}
+.action-button.primary:hover:not(:disabled) {
+  background-color: #e65c00;
+}
+
+.action-button.success {
+  background-color: #28a745;
+}
+.action-button.success:hover:not(:disabled) {
+  background-color: #218838;
+}
+
+.action-button.danger {
+  background-color: #dc3545;
+}
+.action-button.danger:hover:not(:disabled) {
+  background-color: #c82333;
 }
 </style> 
