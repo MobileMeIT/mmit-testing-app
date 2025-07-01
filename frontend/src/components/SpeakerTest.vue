@@ -23,20 +23,6 @@
               Playing ({{ currentTestStep }})
             </span>
           </button>
-
-          <div class="volume-control">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-volume-1"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
-            <input 
-              type="range" 
-              min="0" 
-              max="100" 
-              v-model="volume" 
-              class="volume-slider"
-              @input="updateVolume"
-              :disabled="isPlaying"
-            />
-             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-volume-2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
-          </div>
         </div>
         
         <div class="controls-bar">
@@ -59,7 +45,6 @@ export default {
   name: 'SpeakerTest',
   data() {
     return {
-      volume: 50,
       isPlaying: false,
       currentTestStep: '',
       audioContext: null,
@@ -87,12 +72,6 @@ export default {
       }
     },
     
-    updateVolume() {
-      if (this.gainNode) {
-        this.gainNode.gain.setValueAtTime(this.volume / 100, this.audioContext.currentTime);
-      }
-    },
-
     async playFullTest() {
       if (this.isPlaying) return;
       this.isPlaying = true;
@@ -128,7 +107,7 @@ export default {
             else if (type === 'Right') this.panNode.pan.setValueAtTime(1, this.audioContext.currentTime);
             else this.panNode.pan.setValueAtTime(0, this.audioContext.currentTime);
 
-            this.updateVolume();
+            this.gainNode.gain.setValueAtTime(0.5, this.audioContext.currentTime); // Use a fixed volume
 
             this.oscillator.connect(this.gainNode).connect(this.panNode).connect(this.audioContext.destination);
             this.oscillator.start();
@@ -396,5 +375,43 @@ export default {
 }
 .action-button.danger:hover:not(:disabled) {
   background-color: #c82333;
+}
+
+.action-button.primary.large {
+  padding: 0.8rem 1.5rem;
+  font-size: 1rem;
+}
+
+.playing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* --- Audio Wave Animation --- */
+.audio-wave {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.audio-wave::before,
+.audio-wave::after {
+  content: '';
+  width: 5px;
+  height: 100%;
+  background-color: white;
+  animation: wave 1s infinite ease-in-out;
+}
+
+.audio-wave::after {
+  animation-delay: -0.5s;
+}
+
+@keyframes wave {
+  0%, 100% { height: 5%; }
+  50% { height: 100%; }
 }
 </style> 
