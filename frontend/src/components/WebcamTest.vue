@@ -5,8 +5,14 @@
     </div>
 
     <div class="test-area">
+      <!-- Initial State: Checking Permission -->
+      <div v-if="checkingPermission" class="state-panel checking-permission">
+        <div class="spinner"></div>
+        <p>Checking for camera permissions...</p>
+      </div>
+
       <!-- Permission Request State -->
-      <div v-if="!permissionGranted && !permissionDenied" class="state-panel permission-request">
+      <div v-else-if="!permissionGranted && !permissionDenied" class="state-panel permission-request">
         <div class="panel-icon">
           <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-lock"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
         </div>
@@ -80,20 +86,66 @@ export default {
       error: null,
       snapshotTaken: false,
       showRetryButton: false,
-      retryTimer: null
+      retryTimer: null,
+      checkingPermission: true
     }
   },
   mounted() {
-    this.checkCameraSupport()
+    this.initializeTest();
   },
   beforeUnmount() {
     this.stopCamera()
   },
   methods: {
-    checkCameraSupport() {
+    async initializeTest() {
+      // Check for basic camera support
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        this.error = 'Camera is not supported in this browser'
-        return
+        this.error = 'Camera is not supported in this browser.';
+        this.permissionGranted = true; // Show the error state in the camera view
+        this.checkingPermission = false;
+        return;
+      }
+
+      // Check for Permissions API
+      if (typeof navigator.permissions?.query !== 'function') {
+        console.warn('Permissions API not supported. Relying on user action to grant permission.');
+        // UI will default to showing 'Grant Permission' button, which is the desired fallback.
+        this.checkingPermission = false;
+        return;
+      }
+
+      try {
+        const permissionStatus = await navigator.permissions.query({ name: 'camera' });
+        this.handlePermissionState(permissionStatus.state);
+        // React to permission changes made by the user in browser settings
+        permissionStatus.onchange = () => {
+          this.handlePermissionState(permissionStatus.state);
+        };
+      } catch (err) {
+        console.error("Error querying camera permissions:", err);
+        this.error = "Could not verify camera permissions. Please grant access when prompted.";
+        this.permissionGranted = true; // Show error state
+      } finally {
+        this.checkingPermission = false;
+      }
+    },
+
+    handlePermissionState(state) {
+      if (state === 'granted') {
+        this.permissionGranted = true;
+        this.permissionDenied = false;
+        // If permission is granted, and we don't have a stream, get it.
+        if (!this.stream) {
+          this.requestPermission();
+        }
+      } else if (state === 'prompt') {
+        // Ready for user to click the button
+        this.permissionGranted = false;
+        this.permissionDenied = false;
+      } else if (state === 'denied') {
+        this.permissionDenied = true;
+        this.permissionGranted = false;
+        this.stopCamera(); // Ensure camera is off if permission is revoked
       }
     },
     
@@ -313,6 +365,11 @@ export default {
   color: #dc3545;
 }
 
+.state-panel.checking-permission p {
+  margin-top: 1rem;
+  font-size: 1rem;
+  color: #a0a0a0;
+}
 
 /* --- Main Camera View --- */
 .camera-view {

@@ -5,8 +5,14 @@
     </div>
 
     <div class="test-area">
+      <!-- Initial State: Checking Permission -->
+      <div v-if="checkingPermission" class="state-panel checking-permission">
+        <div class="spinner"></div>
+        <p>Checking for microphone permissions...</p>
+      </div>
+
       <!-- Permission Request State -->
-      <div v-if="!permissionGranted && !permissionDenied" class="state-panel">
+      <div v-else-if="!permissionGranted && !permissionDenied" class="state-panel">
         <div class="panel-icon">
           <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-lock"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
         </div>
@@ -78,35 +84,76 @@ export default {
       analyser: null,
       permissionGranted: false,
       permissionDenied: false,
-      loading: true,
+      loading: false,
       error: null,
       volumeLevel: 0,
-      animationFrame: null
+      animationFrame: null,
+      checkingPermission: true
     }
   },
   mounted() {
-    this.checkMicrophoneSupport();
-    this.requestPermission();
+    this.initializeTest();
   },
   beforeUnmount() {
     this.cleanup()
   },
   methods: {
-    checkMicrophoneSupport() {
+    async initializeTest() {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        this.error = 'Microphone is not supported in this browser'
+        this.error = 'Microphone is not supported in this browser';
         this.loading = false;
-        return false;
+        this.checkingPermission = false;
+        return;
       }
-      return true;
+      
+      if (typeof navigator.permissions?.query !== 'function') {
+        console.warn('Permissions API not supported. User must manually grant permission.');
+        this.checkingPermission = false;
+        // Fallback to old behavior: show permission request
+        return;
+      }
+
+      try {
+        const permissionStatus = await navigator.permissions.query({ name: 'microphone' });
+        this.handlePermissionState(permissionStatus.state);
+        permissionStatus.onchange = () => {
+          this.handlePermissionState(permissionStatus.state);
+        };
+      } catch (err) {
+        console.error("Error querying microphone permissions:", err);
+        this.error = "Could not verify microphone permissions.";
+        this.checkingPermission = false;
+      }
     },
 
-    async requestPermission() {
-      this.loading = true
+    handlePermissionState(state) {
+      this.checkingPermission = false;
+      if (state === 'granted') {
+        this.permissionGranted = true;
+        this.permissionDenied = false;
+        if (!this.stream) {
+          this.requestPermission(false); // false to not show loading screen
+        }
+      } else if (state === 'prompt') {
+        this.permissionGranted = false;
+        this.permissionDenied = false;
+      } else if (state === 'denied') {
+        this.permissionDenied = true;
+        this.permissionGranted = false;
+        this.cleanup();
+      }
+    },
+
+    async requestPermission(showLoading = true) {
+      this.loading = showLoading;
       this.error = null
       this.permissionDenied = false
 
-      if (!this.checkMicrophoneSupport()) return;
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          this.error = 'Microphone is not supported in this browser';
+          this.loading = false;
+          return;
+      }
 
       try {
         const constraints = {
@@ -280,6 +327,11 @@ export default {
   color: #dc3545;
 }
 
+.state-panel.checking-permission p {
+  margin-top: 1rem;
+  font-size: 1rem;
+  color: #a0a0a0;
+}
 
 /* --- Main Mic View --- */
 .mic-view {
