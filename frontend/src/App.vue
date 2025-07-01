@@ -35,9 +35,21 @@
         </ul>
       </nav>
        <div class="sidebar-footer">
-          <div v-if="allTestsCompleted" class="summary">
-            <h4>All Tests Complete</h4>
-            <p>{{ getOverallStatusText() }}</p>
+          <div class="detailed-summary">
+            <h4>Test Summary</h4>
+            <p>Completed: {{ completedTestsCount }}/{{ totalTestsCount }}</p>
+            <div v-if="passedTests.length > 0" class="result-list passed">
+                <p>Passed: {{ passedTests.length }}</p>
+                <ul>
+                    <li v-for="test in passedTests" :key="test">{{ testNameMap[test] }}</li>
+                </ul>
+            </div>
+            <div v-if="failedTests.length > 0" class="result-list failed">
+                <p>Failed: {{ failedTests.length }}</p>
+                <ul>
+                    <li v-for="test in failedTests" :key="test">{{ testNameMap[test] }}</li>
+                </ul>
+            </div>
           </div>
           <button v-if="allTestsCompleted" @click="exportResults" class="action-button primary">📊 Export Report</button>
           <button @click="resetTests" class="action-button secondary">🔄 Reset Tests</button>
@@ -47,9 +59,9 @@
     <!-- Main Content -->
     <main class="main-content">
       <div class="test-panel-wrapper">
-         <WebcamTest v-if="activeTest === 'webcam'" @test-completed="onTestCompleted('webcam')" @test-failed="onTestFailed('webcam')" />
-         <MicrophoneTest v-if="activeTest === 'microphone'" @test-completed="onTestCompleted('microphone')" @test-failed="onTestFailed('microphone')" />
-         <SpeakerTest v-if="activeTest === 'speakers'" @test-completed="onTestCompleted('speakers')" @test-failed="onTestFailed('speakers')" />
+         <WebcamTest v-if="activeTest === 'webcam'" @test-completed="onTestCompleted" @test-failed="onTestFailed" />
+         <MicrophoneTest v-if="activeTest === 'microphone'" @test-completed="onTestCompleted" @test-failed="onTestFailed" />
+         <SpeakerTest v-if="activeTest === 'speakers'" @test-completed="onTestCompleted" @test-failed="onTestFailed" />
       </div>
     </main>
   </div>
@@ -74,12 +86,56 @@ export default {
         webcam: null, // null: pending, true: pass, false: fail
         microphone: null,
         speakers: null
+      },
+      testNameMap: {
+        webcam: 'Camera Test',
+        microphone: 'Microphone Test',
+        speakers: 'Speaker Test'
       }
     }
   },
   computed: {
     allTestsCompleted() {
       return Object.values(this.results).every(r => r !== null);
+    },
+    completedTestsCount() {
+      return Object.values(this.results).filter(r => r !== null).length;
+    },
+    totalTestsCount() {
+      return Object.keys(this.results).length;
+    },
+    passedTests() {
+        return Object.keys(this.results).filter(test => this.results[test] === true);
+    },
+    failedTests() {
+        return Object.keys(this.results).filter(test => this.results[test] === false);
+    },
+    anyTestsFailed() {
+      return Object.values(this.results).some(r => r === false);
+    },
+    summaryClass() {
+      if (this.anyTestsFailed) {
+        return 'completed-fail';
+      }
+      if (this.allTestsCompleted) {
+        return 'completed-success';
+      }
+      return 'in-progress';
+    },
+    summaryText() {
+      const totalTests = Object.keys(this.results).length;
+      const completedCount = this.completedTestsCount;
+
+      if (!this.allTestsCompleted) {
+        return `${completedCount}/${totalTests} In Progress...`;
+      } else {
+        const failedCount = Object.values(this.results).filter(r => r === false).length;
+        if (failedCount > 0) {
+            return `${totalTests}/${totalTests} Completed (${failedCount} Failed)`;
+        } else {
+            return `${totalTests}/${totalTests} Completed`;
+        }
+      }
     }
   },
   methods: {
@@ -126,18 +182,11 @@ export default {
         if (this.results[testType] === false) return 'completed-fail';
         return 'pending';
     },
-    getOverallStatusText() {
-      const passed = Object.values(this.results).filter(r => r === true).length;
-      const failed = Object.values(this.results).filter(r => r === false).length;
-      
-      if (failed === 0) return 'All Systems Go!';
-      return `${passed} Passed, ${failed} Failed`;
-    },
     exportResults() {
       const report = {
         timestamp: new Date().toISOString(),
         results: this.results,
-        summary: this.getOverallStatusText()
+        summary: this.summaryText
       }
       
       const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
@@ -268,25 +317,44 @@ export default {
   flex-shrink: 0;
 }
 
-.summary {
+.footer-summary {
   text-align: center;
   margin-bottom: 1rem;
-  padding: 0.75rem;
-  background-color: #1f1f1f;
+  padding: 0.85rem 0.75rem; /* Adjusted for single line */
   border-radius: 6px;
+  border: 1px solid #444;
+  transition: all 0.3s ease;
+  line-height: 1.2;
 }
 
-.summary h4 {
-  font-size: 0.9rem; /* Reduced font size */
-  margin: 0 0 0.25rem;
-  color: #fff;
+.footer-summary.in-progress {
+    background-color: #1f1f1f;
+    border-color: #444;
 }
 
-.summary p {
-  margin: 0;
-  font-size: 0.8rem;
-  color: #ff6b00;
-  font-weight: 500;
+.footer-summary.completed-success {
+    background-color: rgba(40, 167, 69, 0.15);
+    border-color: #28a745;
+}
+
+.footer-summary.completed-success .summary-text {
+    color: #33ff66;
+}
+
+.footer-summary.completed-fail {
+    background-color: rgba(220, 53, 69, 0.15);
+    border-color: #dc3545;
+}
+
+.footer-summary.completed-fail .summary-text {
+    color: #ff6677;
+}
+
+.summary-text {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #d4d4d4;
+    transition: color 0.3s ease;
 }
 
 .action-button {
@@ -336,5 +404,49 @@ export default {
   border: 1px solid #262626;
   min-height: 100%;
   box-shadow: 0 4px 25px rgba(0,0,0,0.2);
+}
+
+/* New Detailed Summary Styles */
+.detailed-summary {
+  padding: 0.75rem;
+  border: 1px solid #262626;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  background: #1a1a1a;
+}
+.detailed-summary h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #f0f0f0;
+}
+.detailed-summary p {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.8rem;
+  color: #a0a0a0;
+}
+.result-list {
+    margin-top: 0.5rem;
+}
+.result-list p {
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+.result-list.passed p {
+    color: #48bb78;
+}
+.result-list.failed p {
+    color: #e53e3e;
+}
+.result-list ul {
+  list-style: none;
+  padding-left: 0.75rem;
+  margin: 0;
+  font-size: 0.75rem;
+  color: #a0a0a0;
+}
+.result-list ul li::before {
+  content: '› ';
+  color: #ff6b00;
 }
 </style> 

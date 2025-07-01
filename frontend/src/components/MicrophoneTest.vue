@@ -262,12 +262,12 @@ export default {
     },
 
     completeTest() {
-      this.$emit('test-completed')
+      this.$emit('test-completed', 'microphone')
       this.cleanup()
     },
 
     failTest() {
-      this.$emit('test-failed')
+      this.$emit('test-failed', 'microphone')
       this.cleanup()
     },
 

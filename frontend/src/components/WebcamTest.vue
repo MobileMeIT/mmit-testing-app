@@ -24,55 +24,55 @@
         </button>
       </div>
 
-      <div v-else-if="loading" class="loading">
-        <div class="spinner"></div>
-        <p>Initializing camera...</p>
-        <button v-if="showRetryButton" @click="forceRetry" class="retry-button" style="margin-top: 1rem;">
-          Camera Taking Too Long? Try Again
-        </button>
-      </div>
-
-      <div v-else-if="error" class="error">
-        <div class="error-icon">⚠️</div>
-        <h4>Camera Error</h4>
-        <p>{{ error }}</p>
-        <button @click="retryTest" class="retry-button">
-          Retry Test
-        </button>
-      </div>
-
-      <div v-else class="camera-container">
-        <video
-          ref="videoElement"
-          autoplay
-          muted
-          playsinline
-          controls="false"
-          class="camera-preview"
-        ></video>
-        
-        <div class="camera-controls">
-          <div class="status-indicator" :class="{ active: isStreaming }">
-            <div class="status-dot"></div>
-            <span>{{ isStreaming ? 'Camera Active' : 'Camera Inactive' }}</span>
-          </div>
-          
-          <div class="test-actions">
-            <button @click="takeSnapshot" class="action-button primary">
-              📸 Take Test Photo
-            </button>
-            <button @click="completeTest" class="action-button success" :disabled="!snapshotTaken">
-              ✅ Camera Works Fine
-            </button>
-            <button @click="failTest" class="action-button danger">
-              ❌ Camera Not Working
-            </button>
-          </div>
+      <div v-else class="camera-wrapper">
+        <div v-if="loading" class="overlay loading">
+          <div class="spinner"></div>
+          <p>Initializing camera...</p>
+          <button v-if="showRetryButton" @click="forceRetry" class="retry-button" style="margin-top: 1rem;">
+            Camera Taking Too Long? Try Again
+          </button>
         </div>
 
-        <div v-if="snapshotTaken" class="snapshot-preview">
-          <h4>Test Photo Captured</h4>
-          <canvas ref="snapshotCanvas" class="snapshot-canvas"></canvas>
+        <div v-if="error" class="overlay error">
+          <div class="error-icon">⚠️</div>
+          <h4>Camera Error</h4>
+          <p>{{ error }}</p>
+          <button @click="retryTest" class="retry-button">
+            Retry Test
+          </button>
+        </div>
+
+        <div class="camera-container">
+          <video
+            ref="videoElement"
+            autoplay
+            muted
+            playsinline
+            controls="false"
+            class="camera-preview"
+            :class="{ hidden: loading || error }"
+          ></video>
+          
+          <div class="camera-controls" :class="{ hidden: loading || error }">
+            <div class="status-indicator" :class="{ active: isStreaming }">
+              <div class="status-dot"></div>
+              <span>{{ isStreaming ? 'Camera Active' : 'Camera Inactive' }}</span>
+            </div>
+            
+            <div class="test-actions">
+              <button @click="completeTest" class="action-button success">
+                ✅ Working
+              </button>
+              <button @click="failTest" class="action-button danger">
+                ❌ Not Working
+              </button>
+            </div>
+          </div>
+
+          <div v-if="snapshotTaken" class="snapshot-preview" :class="{ hidden: loading || error }">
+            <h4>Test Photo Captured</h4>
+            <canvas ref="snapshotCanvas" class="snapshot-canvas"></canvas>
+          </div>
         </div>
       </div>
     </div>
@@ -138,18 +138,8 @@ export default {
         // Wait for Vue to update the DOM
         await this.$nextTick()
         
-        // Wait a bit more to ensure video element is ready
-        await new Promise(resolve => setTimeout(resolve, 300))
-        
-        // Wait for video element to be available in DOM
-        let attempts = 0
-        while (!this.$refs.videoElement && attempts < 10) {
-          await new Promise(resolve => setTimeout(resolve, 100))
-          attempts++
-        }
-        
         if (!this.$refs.videoElement) {
-          console.error('Video element not found after multiple attempts')
+          console.error('Video element not found. This should not happen.')
           this.error = 'Unable to initialize camera interface. Please refresh and try again.'
           this.loading = false
           this.clearRetryTimer()
@@ -227,19 +217,18 @@ export default {
     },
     
     completeTest() {
-      this.$emit('test-completed')
+      this.$emit('test-completed', 'webcam')
       this.stopCamera()
     },
     
     failTest() {
-      this.$emit('test-failed')
+      this.$emit('test-failed', 'webcam')
       this.stopCamera()
     },
     
     retryTest() {
       this.error = null
       this.permissionDenied = false
-      this.snapshotTaken = false
       this.loading = false
       this.isStreaming = false
       this.stopCamera()
@@ -355,23 +344,57 @@ export default {
   100% { transform: rotate(360deg); }
 }
 
-.camera-container {
+.camera-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background-color: #000;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 10;
+  padding: 1rem;
+  text-align: center;
+}
+
+.camera-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .camera-preview {
   width: 100%;
-  max-width: 640px;
-  height: auto;
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  margin: 0 auto;
-  display: block;
+  flex-grow: 1;
+  object-fit: contain;
+  border-radius: 8px 8px 0 0;
+  background: #000;
+  transition: opacity 0.3s ease;
+}
+
+.camera-preview.hidden,
+.camera-controls.hidden,
+.snapshot-preview.hidden {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .camera-controls {
+  background: #1f1f1f;
+  padding: 0.75rem 1rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -416,9 +439,8 @@ export default {
 
 .test-actions {
   display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
   justify-content: center;
+  gap: 1rem;
 }
 
 .action-button {
@@ -429,11 +451,6 @@ export default {
   cursor: pointer;
   transition: all 0.3s ease;
   font-weight: 500;
-}
-
-.action-button.primary {
-  background: #ff6b00;
-  color: white;
 }
 
 .action-button.success {
@@ -457,21 +474,15 @@ export default {
 }
 
 .snapshot-preview {
+  margin-top: 1.5rem;
   text-align: center;
-  margin-top: 1rem;
-}
-
-.snapshot-preview h4 {
-  margin-bottom: 1rem;
-  color: #ff6b00;
-  font-weight: 600;
 }
 
 .snapshot-canvas {
-  max-width: 300px;
-  max-height: 200px;
+  max-width: 320px;
+  height: auto;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #333;
 }
 
 @media (max-width: 768px) {
