@@ -32,6 +32,14 @@
             <span class="test-name">Speaker Test</span>
             <span class="status-indicator" :class="getTestStatusClass('speakers')"></span>
           </li>
+          <li
+            :class="{ active: activeTest === 'keyboard' }"
+            @click="setActiveTest('keyboard')"
+          >
+            <div class="test-icon">⌨️</div>
+            <span class="test-name">Keyboard Test</span>
+            <span class="status-indicator" :class="getTestStatusClass('keyboard')"></span>
+          </li>
         </ul>
       </nav>
        <div class="sidebar-footer">
@@ -62,6 +70,7 @@
          <WebcamTest v-if="activeTest === 'webcam'" @test-completed="onTestCompleted" @test-failed="onTestFailed" />
          <MicrophoneTest v-if="activeTest === 'microphone'" @test-completed="onTestCompleted" @test-failed="onTestFailed" />
          <SpeakerTest v-if="activeTest === 'speakers'" @test-completed="onTestCompleted" @test-failed="onTestFailed" />
+         <KeyboardTest v-if="activeTest === 'keyboard'" @test-completed="onTestCompleted" @test-failed="onTestFailed" />
       </div>
     </main>
   </div>
@@ -71,13 +80,15 @@
 import WebcamTest from './components/WebcamTest.vue'
 import MicrophoneTest from './components/MicrophoneTest.vue'
 import SpeakerTest from './components/SpeakerTest.vue'
+import KeyboardTest from './components/KeyboardTest.vue'
 
 export default {
   name: 'App',
   components: {
     WebcamTest,
     MicrophoneTest,
-    SpeakerTest
+    SpeakerTest,
+    KeyboardTest
   },
   data() {
     return {
@@ -85,12 +96,14 @@ export default {
       results: {
         webcam: null, // null: pending, true: pass, false: fail
         microphone: null,
-        speakers: null
+        speakers: null,
+        keyboard: null
       },
       testNameMap: {
         webcam: 'Camera Test',
         microphone: 'Microphone Test',
-        speakers: 'Speaker Test'
+        speakers: 'Speaker Test',
+        keyboard: 'Keyboard Test'
       }
     }
   },
@@ -150,7 +163,7 @@ export default {
       this.results[testType] = false;
     },
     autoAdvance(currentTest) {
-        const tests = ['webcam', 'microphone', 'speakers'];
+        const tests = ['webcam', 'microphone', 'speakers', 'keyboard'];
         const currentIndex = tests.indexOf(currentTest);
         if (currentIndex < tests.length - 1) {
           // Find next test that is not yet completed
@@ -174,7 +187,8 @@ export default {
         this.results = {
             webcam: null,
             microphone: null,
-            speakers: null
+            speakers: null,
+            keyboard: null
         };
     },
     getTestStatusClass(testType) {
