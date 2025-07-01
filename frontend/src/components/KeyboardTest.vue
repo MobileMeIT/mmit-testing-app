@@ -9,7 +9,7 @@
         <div class="test-info">
           <p>Press each key on your keyboard. The corresponding key below will light up.</p>
           <div class="status">
-            Remaining keys: <strong>{{ remainingKeysCount }}</strong>
+            Keys pressed: <strong>{{ pressedKeysCount }}</strong>
           </div>
         </div>
 
@@ -51,7 +51,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-x"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             <span>Not Working</span>
           </button>
-          <button @click="completeTest" class="action-button success" :disabled="!allKeysPressed">
+          <button @click="completeTest" class="action-button success">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-check"><polyline points="20 6 9 17 4 12"></polyline></svg>
             <span>Working</span>
           </button>
@@ -93,7 +93,6 @@ export default {
         navigation: [],
         arrows: [],
       },
-      totalKeys: 0,
     }
   },
   computed: {
@@ -101,19 +100,6 @@ export default {
       const allKeys = Object.values(this.keyboardLayout).flat(2);
       return allKeys.filter(k => k.pressed).length;
     },
-    remainingKeysCount() {
-      return this.totalKeys - this.pressedKeysCount;
-    },
-    allKeysPressed() {
-      return this.remainingKeysCount === 0;
-    }
-  },
-  watch: {
-    allKeysPressed(isComplete) {
-      if (isComplete) {
-        this.completeTest();
-      }
-    }
   },
   created() {
     this.initializeKeyboard();
@@ -128,18 +114,16 @@ export default {
   },
   methods: {
     initializeKeyboard() {
-      let total = 0;
       for (const section in keyboardLayoutDefinition) {
           this.keyboardLayout[section] = keyboardLayoutDefinition[section].map(row => 
             row.map(key => {
               const isBlank = key.code === 'blank';
               const display = isBlank ? '' : (key.display || key.code);
-              if (!isBlank) total++;
+              if (!isBlank);
               return { ...key, display, pressed: false, active: false, code: isBlank ? `blank-${Math.random()}`: key.code };
             })
           );
       }
-      this.totalKeys = total;
     },
     handleKeyDown(e) {
       e.preventDefault();
@@ -272,15 +256,15 @@ export default {
     flex-grow: 0.5;
 }
 .key.pressed {
-  background-color: #28a745;
-  border-color: #208637;
+  background-color: #ff6b00;
+  border-color: #e66000;
   color: white;
 }
 .key.utility {
   background-color: #555;
 }
 .key.utility.pressed {
-  background-color: #28a745;
+  background-color: #ff6b00;
 }
 .key.active {
   transform: translateY(2px);
@@ -348,12 +332,12 @@ export default {
 }
 
 .action-button.success {
-  background-color: #28a745;
-  border-color: #28a745;
+  background-color: #ff6b00;
+  border-color: #ff6b00;
   color: #fff;
 }
 .action-button.success:not(:disabled):hover {
-  background-color: #218838;
-  border-color: #1e7e34;
+  background-color: #e66000;
+  border-color: #cc5800;
 }
 </style> 
