@@ -508,4 +508,40 @@ export default {
 .result-list.failed p {
     color: #dc3545;
 }
+
+.action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  color: white;
+}
+
+.action-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.action-button.danger {
+  background-color: #dc3545;
+}
+
+.action-button.success {
+  background-color: #28a745;
+}
+
+.action-button.primary {
+  background-color: #007bff;
+}
+
+.action-button.secondary {
+  background-color: #6c757d;
+}
 </style> 

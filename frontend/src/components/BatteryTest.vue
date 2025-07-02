@@ -481,7 +481,7 @@ export default {
   justify-content: center;
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
-  border-radius: 6px;
+  border-radius: 4px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
