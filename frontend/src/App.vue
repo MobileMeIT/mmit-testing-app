@@ -40,6 +40,14 @@
             <span class="test-name">Keyboard Test</span>
             <span class="status-indicator" :class="getTestStatusClass('keyboard')"></span>
           </li>
+          <li
+            :class="{ active: activeTest === 'touch' }"
+            @click="setActiveTest('touch')"
+          >
+            <div class="test-icon">👆</div>
+            <span class="test-name">Touch Test</span>
+            <span class="status-indicator" :class="getTestStatusClass('touch')"></span>
+          </li>
         </ul>
       </nav>
        <div class="sidebar-footer">
@@ -71,6 +79,7 @@
          <MicrophoneTest v-if="activeTest === 'microphone'" @test-completed="onTestCompleted" @test-failed="onTestFailed" />
          <SpeakerTest v-if="activeTest === 'speakers'" @test-completed="onTestCompleted" @test-failed="onTestFailed" />
          <KeyboardTest v-if="activeTest === 'keyboard'" @test-completed="onTestCompleted" @test-failed="onTestFailed" />
+         <TouchTest v-if="activeTest === 'touch'" @test-completed="onTestCompleted" @test-failed="onTestFailed" />
       </div>
     </main>
   </div>
@@ -81,6 +90,7 @@ import WebcamTest from './components/WebcamTest.vue'
 import MicrophoneTest from './components/MicrophoneTest.vue'
 import SpeakerTest from './components/SpeakerTest.vue'
 import KeyboardTest from './components/KeyboardTest.vue'
+import TouchTest from './components/TouchTest.vue'
 
 export default {
   name: 'App',
@@ -88,7 +98,8 @@ export default {
     WebcamTest,
     MicrophoneTest,
     SpeakerTest,
-    KeyboardTest
+    KeyboardTest,
+    TouchTest
   },
   data() {
     return {
@@ -97,13 +108,15 @@ export default {
         webcam: null, // null: pending, true: pass, false: fail
         microphone: null,
         speakers: null,
-        keyboard: null
+        keyboard: null,
+        touch: null
       },
       testNameMap: {
         webcam: 'Camera Test',
         microphone: 'Microphone Test',
         speakers: 'Speaker Test',
-        keyboard: 'Keyboard Test'
+        keyboard: 'Keyboard Test',
+        touch: 'Touch Test'
       }
     }
   },
@@ -163,7 +176,7 @@ export default {
       this.results[testType] = false;
     },
     autoAdvance(currentTest) {
-        const tests = ['webcam', 'microphone', 'speakers', 'keyboard'];
+        const tests = ['webcam', 'microphone', 'speakers', 'keyboard', 'touch'];
         const currentIndex = tests.indexOf(currentTest);
         if (currentIndex < tests.length - 1) {
           // Find next test that is not yet completed
@@ -188,7 +201,8 @@ export default {
             webcam: null,
             microphone: null,
             speakers: null,
-            keyboard: null
+            keyboard: null,
+            touch: null
         };
     },
     getTestStatusClass(testType) {
