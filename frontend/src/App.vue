@@ -56,6 +56,14 @@
             <span class="test-name">Touch Test</span>
             <span class="status-indicator" :class="getTestStatusClass('touch')"></span>
           </li>
+          <li
+            :class="{ active: activeTest === 'battery' }"
+            @click="setActiveTest('battery')"
+          >
+            <div class="test-icon">🔋</div>
+            <span class="test-name">Battery Test</span>
+            <span class="status-indicator" :class="getTestStatusClass('battery')"></span>
+          </li>
         </ul>
       </nav>
        <div class="sidebar-footer">
@@ -89,6 +97,7 @@
          <KeyboardTest v-if="activeTest === 'keyboard'" @test-completed="onTestCompleted" @test-failed="onTestFailed" />
          <MouseTest v-if="activeTest === 'mouse'" @test-completed="onTestCompleted" @test-failed="onTestFailed" />
          <TouchTest v-if="activeTest === 'touch'" @test-completed="onTestCompleted" @test-failed="onTestFailed" />
+         <BatteryTest v-if="activeTest === 'battery'" @test-completed="onTestCompleted" @test-failed="onTestFailed" />
       </div>
     </main>
   </div>
@@ -101,6 +110,7 @@ import SpeakerTest from './components/SpeakerTest.vue'
 import KeyboardTest from './components/KeyboardTest.vue'
 import MouseTest from './components/MouseTest.vue'
 import TouchTest from './components/TouchTest.vue'
+import BatteryTest from './components/BatteryTest.vue'
 
 export default {
   name: 'App',
@@ -110,7 +120,8 @@ export default {
     SpeakerTest,
     KeyboardTest,
     MouseTest,
-    TouchTest
+    TouchTest,
+    BatteryTest
   },
   data() {
     return {
@@ -121,7 +132,8 @@ export default {
         speakers: null,
         keyboard: null,
         mouse: null,
-        touch: null
+        touch: null,
+        battery: null
       },
       testNameMap: {
         webcam: 'Camera Test',
@@ -129,7 +141,8 @@ export default {
         speakers: 'Speaker Test',
         keyboard: 'Keyboard Test',
         mouse: 'Mouse Test',
-        touch: 'Touch Test'
+        touch: 'Touch Test',
+        battery: 'Battery Test'
       }
     }
   },
@@ -189,7 +202,7 @@ export default {
       this.results[testType] = false;
     },
     autoAdvance(currentTest) {
-        const tests = ['webcam', 'microphone', 'speakers', 'keyboard', 'mouse', 'touch'];
+        const tests = ['webcam', 'microphone', 'speakers', 'keyboard', 'mouse', 'touch', 'battery'];
         const currentIndex = tests.indexOf(currentTest);
         if (currentIndex < tests.length - 1) {
           // Find next test that is not yet completed
@@ -216,7 +229,8 @@ export default {
             speakers: null,
             keyboard: null,
             mouse: null,
-            touch: null
+            touch: null,
+            battery: null
         };
     },
     getTestStatusClass(testType) {
