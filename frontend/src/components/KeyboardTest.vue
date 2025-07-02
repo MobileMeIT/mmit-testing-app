@@ -21,18 +21,18 @@
         </div>
         <div class="test-area">
             <div class="keyboard-view">
-
-
-
                 <div class="keyboard-container">
-                    <div class="keyboard-section main-keyboard">
-                        <div class="keyboard-row function-keys">
+                    <div class="keyboard-section function-row">
+                        <div class="keyboard-row">
                             <div v-for="key in keyboardLayout.functions[0]" :key="key.code" :data-code="key.code"
                                 class="key" :class="[key.style, { pressed: key.pressed, active: key.active }]">
                                 <span v-if="key.code !== 'blank'">{{ key.display }}</span>
                             </div>
                         </div>
-                        <div class="keyboard main-keys">
+                    </div>
+
+                    <div class="keyboard-section main-section">
+                        <div class="main-keys">
                             <div v-for="(row, rowIndex) in keyboardLayout.main" :key="`row-${rowIndex}`"
                                 class="keyboard-row">
                                 <div v-for="key in row" :key="key.code" :data-code="key.code" class="key"
@@ -41,30 +41,29 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="keyboard-section side-keys">
-                        <div class="keyboard navigation-keys">
-                            <div v-for="(row, rowIndex) in keyboardLayout.navigation" :key="`nav-row-${rowIndex}`"
-                                class="keyboard-row">
-                                <div v-for="key in row" :key="key.code" :data-code="key.code" class="key"
-                                    :class="[key.style, { pressed: key.pressed, active: key.active }]">
-                                    <span>{{ key.display }}</span>
+
+                        <div class="side-section">
+                            <div class="nav-keys">
+                                <div v-for="(row, rowIndex) in keyboardLayout.navigation" :key="`nav-row-${rowIndex}`"
+                                    class="keyboard-row">
+                                    <div v-for="key in row" :key="key.code" :data-code="key.code" class="key"
+                                        :class="[key.style, { pressed: key.pressed, active: key.active }]">
+                                        <span>{{ key.display }}</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="keyboard-spacer"></div>
-                        <div class="keyboard arrow-keys">
-                            <div v-for="(row, rowIndex) in keyboardLayout.arrows" :key="`arrow-row-${rowIndex}`"
-                                class="keyboard-row">
-                                <div v-for="key in row" :key="key.code" :data-code="key.code" class="key"
-                                    :class="[key.style, { pressed: key.pressed, active: key.active }]">
-                                    <span v-if="key.code !== 'blank'">{{ key.display }}</span>
+                            <div class="arrow-keys">
+                                <div v-for="(row, rowIndex) in keyboardLayout.arrows" :key="`arrow-row-${rowIndex}`"
+                                    class="keyboard-row">
+                                    <div v-for="key in row" :key="key.code" :data-code="key.code" class="key"
+                                        :class="[key.style, { pressed: key.pressed, active: key.active }]">
+                                        <span v-if="key.code !== 'blank'">{{ key.display }}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-
 
                 <div class="controls-bar">
                     <button @click="failTest" class="action-button danger">
@@ -263,30 +262,51 @@ export default {
 
 .keyboard-container {
     display: flex;
-    gap: 1.5rem;
+    flex-direction: column;
+    gap: 6px;
     padding: 1rem;
     background-color: #1a1a1a;
     border-radius: 8px;
     border: 1px solid #333;
-    max-width: 1200px;
     width: 100%;
+    max-width: 1200px;
 }
 
 .keyboard-section {
     display: flex;
+    gap: 6px;
+}
+
+.main-section {
+    display: flex;
+    gap: 24px;
+}
+
+.main-keys {
+    flex: 1;
+    display: flex;
     flex-direction: column;
     gap: 6px;
 }
 
-.keyboard {
+.side-section {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.nav-keys, .arrow-keys {
     display: flex;
     flex-direction: column;
     gap: 6px;
+}
+
+.arrow-keys {
+    margin-top: 30px;
 }
 
 .keyboard-row {
     display: flex;
-    justify-content: center;
     gap: 6px;
 }
 
