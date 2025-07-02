@@ -1,7 +1,11 @@
 <template>
   <div class="mic-test-container">
     <div class="test-header">
-      <h2><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-mic"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg> Microphone Test</h2>
+      <h2>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-mic"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+        Microphone Test
+      </h2>
+      <p class="test-description">Speak into your microphone and check if the volume bar responds.</p>
     </div>
 
     <div class="test-area">
@@ -54,7 +58,6 @@
       <!-- Main Mic View -->
       <div v-else class="mic-view">
         <div class="visualizer-container">
-          <p>Speak into your microphone. The bar should move.</p>
           <div class="volume-meter">
             <div class="volume-bar" :style="{ width: volumeLevel + '%' }"></div>
           </div>
@@ -280,13 +283,20 @@ export default {
   font-size: 1.5rem;
   font-weight: 600;
   color: #e0e0e0;
+  margin-bottom: 0.5rem;
+}
+
+.test-description {
+  color: #a0a0a0;
+  font-size: 0.95rem;
+  margin: 0;
 }
 
 .test-area {
   flex-grow: 1;
   display: flex;
-  justify-content: center;
-  align-items: center;
+  flex-direction: column;
+  justify-content: space-between;
   background-color: #252526;
   border-radius: 8px;
   overflow: hidden;
@@ -302,6 +312,7 @@ export default {
   text-align: center;
   padding: 2rem;
   color: #cccccc;
+  flex-grow: 1;
 }
 
 .state-panel h3 {
@@ -342,33 +353,35 @@ export default {
 }
 
 .visualizer-container {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 2rem;
-    gap: 1.5rem;
-    color: #cccccc;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  background: #1e1e1e;
+  margin: 1rem;
+  border-radius: 8px;
+  border: 1px solid #333;
 }
 
 .volume-meter {
-  width: 80%;
-  max-width: 400px;
-  height: 20px;
+  width: 100%;
+  max-width: 600px;
+  height: 40px;
   background-color: #333;
-  border-radius: 10px;
+  border-radius: 20px;
   overflow: hidden;
+  position: relative;
   border: 1px solid #444;
 }
 
 .volume-bar {
   height: 100%;
-  background-color: #ff6b00;
-  border-radius: 10px;
-  transition: width 0.1s linear;
+  background-color: #28a745;
+  transition: width 0.1s ease;
+  border-radius: 20px;
 }
-
 
 /* --- Controls Bar --- */
 .controls-bar {
@@ -376,12 +389,12 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 1rem;
+  gap: 1.5rem;
   padding: 1rem;
+  width: 100%;
   background-color: #2c2c2e;
   border-top: 1px solid #444;
 }
-
 
 /* --- Common Elements --- */
 .action-button {

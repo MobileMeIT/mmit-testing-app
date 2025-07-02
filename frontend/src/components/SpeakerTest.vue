@@ -1,7 +1,11 @@
 <template>
   <div class="speaker-test-container">
     <div class="test-header">
-      <h2><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-volume-2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg> Speaker Test</h2>
+      <h2>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-volume-2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+        Speaker Test
+      </h2>
+      <div class="test-description">Test your speakers by playing a sound sequence through each channel.</div>
     </div>
 
     <div class="test-area">
@@ -177,13 +181,20 @@ export default {
   font-size: 1.5rem;
   font-weight: 600;
   color: #e0e0e0;
+  margin-bottom: 0.5rem;
+}
+
+.test-description {
+  color: #a0a0a0;
+  font-size: 0.95rem;
+  margin: 0;
 }
 
 .test-area {
   flex-grow: 1;
   display: flex;
-  justify-content: center;
-  align-items: center;
+  flex-direction: column;
+  justify-content: space-between;
   background-color: #252526;
   border-radius: 8px;
   overflow: hidden;
@@ -206,6 +217,10 @@ export default {
   align-items: center;
   text-align: center;
   padding: 2rem;
+  margin: 1rem;
+  background: #1e1e1e;
+  border-radius: 8px;
+  border: 1px solid #333;
   color: #cccccc;
 }
 
@@ -218,7 +233,6 @@ export default {
 }
 
 .main-content p {
-  max-width: 400px;
   margin-bottom: 1.5rem;
   line-height: 1.6;
 }
@@ -229,16 +243,16 @@ export default {
 }
 
 .action-button.large {
-    padding: 1rem 2rem;
-    font-size: 1.1rem;
-    min-width: 200px;
-    height: 50px;
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  min-width: 200px;
+  height: 50px;
 }
 
 .playing-indicator {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 .audio-wave {
@@ -321,6 +335,7 @@ export default {
   align-items: center;
   gap: 1.5rem;
   padding: 1rem;
+  width: 100%;
   background-color: #2c2c2e;
   border-top: 1px solid #444;
 }
@@ -346,14 +361,16 @@ export default {
   color: white;
 }
 
-.action-button:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-}
-
-.action-button:not(:disabled):hover {
+.action-button:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.action-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .action-button.primary {

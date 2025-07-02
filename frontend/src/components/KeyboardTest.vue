@@ -1,54 +1,59 @@
 <template>
   <div class="keyboard-test-container">
     <div class="test-header">
-      <h2><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-keyboard"><rect x="2" y="6" width="20" height="12" rx="2" ry="2"></rect><line x1="6" y1="10" x2="6" y2="10"></line><line x1="10" y1="10" x2="10" y2="10"></line><line x1="14" y1="10" x2="14" y2="10"></line><line x1="18" y1="10" x2="18" y2="10"></line><line x1="8" y1="14" x2="8" y2="14"></line><line x1="12" y1="14" x2="12" y2="14"></line><line x1="16" y1="14" x2="16" y2="14"></line><line x1="6" y1="14" x2="6" y2="14"></line></svg> Keyboard Test</h2>
+      <h2>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-keyboard"><rect x="2" y="6" width="20" height="12" rx="2" ry="2"></rect><line x1="6" y1="10" x2="6" y2="10"></line><line x1="10" y1="10" x2="10" y2="10"></line><line x1="14" y1="10" x2="14" y2="10"></line><line x1="18" y1="10" x2="18" y2="10"></line><line x1="8" y1="14" x2="8" y2="14"></line><line x1="12" y1="14" x2="12" y2="14"></line><line x1="16" y1="14" x2="16" y2="14"></line><line x1="6" y1="14" x2="6" y2="14"></line></svg>
+        Keyboard Test
+      </h2>
+      <p class="test-description">Press each key on your keyboard to verify they are working correctly.</p>
     </div>
 
     <div class="test-area">
       <div class="keyboard-view">
-        <div class="test-info">
-          <p>Press each key on your keyboard. The corresponding key below will light up.</p>
-          <div class="status">
-            Keys pressed: <strong>{{ pressedKeysCount }}</strong>
+        <div class="keyboard-content">
+          <div class="test-info">
+            <div class="status">
+              Keys pressed: <strong>{{ pressedKeysCount }}</strong>
+            </div>
           </div>
-        </div>
 
-        <div class="keyboard-container">
-          <div class="keyboard-section main-keyboard">
-            <div class="keyboard-row function-keys">
+          <div class="keyboard-container">
+            <div class="keyboard-section main-keyboard">
+              <div class="keyboard-row function-keys">
                 <div v-for="key in keyboardLayout.functions[0]" :key="key.code" :data-code="key.code" class="key" :class="[key.style, { pressed: key.pressed, active: key.active }]">
-                    <span v-if="key.code !== 'blank'">{{ key.display }}</span>
+                  <span v-if="key.code !== 'blank'">{{ key.display }}</span>
                 </div>
-            </div>
-            <div class="keyboard main-keys">
+              </div>
+              <div class="keyboard main-keys">
                 <div v-for="(row, rowIndex) in keyboardLayout.main" :key="`row-${rowIndex}`" class="keyboard-row">
-                    <div v-for="key in row" :key="key.code" :data-code="key.code" class="key" :class="[key.style, { pressed: key.pressed, active: key.active }]">
-                        <span>{{ key.display }}</span>
-                    </div>
+                  <div v-for="key in row" :key="key.code" :data-code="key.code" class="key" :class="[key.style, { pressed: key.pressed, active: key.active }]">
+                    <span>{{ key.display }}</span>
+                  </div>
                 </div>
+              </div>
             </div>
-          </div>
-          <div class="keyboard-section side-keys">
+            <div class="keyboard-section side-keys">
               <div class="keyboard navigation-keys">
-                 <div v-for="(row, rowIndex) in keyboardLayout.navigation" :key="`nav-row-${rowIndex}`" class="keyboard-row">
-                    <div v-for="key in row" :key="key.code" :data-code="key.code" class="key" :class="[key.style, { pressed: key.pressed, active: key.active }]">
-                        <span>{{ key.display }}</span>
-                    </div>
+                <div v-for="(row, rowIndex) in keyboardLayout.navigation" :key="`nav-row-${rowIndex}`" class="keyboard-row">
+                  <div v-for="key in row" :key="key.code" :data-code="key.code" class="key" :class="[key.style, { pressed: key.pressed, active: key.active }]">
+                    <span>{{ key.display }}</span>
+                  </div>
                 </div>
               </div>
               <div class="keyboard-spacer"></div>
               <div class="keyboard arrow-keys">
-                 <div v-for="(row, rowIndex) in keyboardLayout.arrows" :key="`arrow-row-${rowIndex}`" class="keyboard-row">
-                    <div v-for="key in row" :key="key.code" :data-code="key.code" class="key" :class="[key.style, { pressed: key.pressed, active: key.active }]">
-                        <span v-if="key.code !== 'blank'">{{ key.display }}</span>
-                    </div>
+                <div v-for="(row, rowIndex) in keyboardLayout.arrows" :key="`arrow-row-${rowIndex}`" class="keyboard-row">
+                  <div v-for="key in row" :key="key.code" :data-code="key.code" class="key" :class="[key.style, { pressed: key.pressed, active: key.active }]">
+                    <span v-if="key.code !== 'blank'">{{ key.display }}</span>
+                  </div>
                 </div>
               </div>
+            </div>
           </div>
         </div>
 
         <div class="controls-bar">
-           <button @click="failTest" class="action-button danger">
+          <button @click="failTest" class="action-button danger">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-x"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             <span>Not Working</span>
           </button>
@@ -168,11 +173,15 @@ export default {
   height: 100%;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
 }
+
 .test-header {
   text-align: center;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  flex-shrink: 0;
 }
+
 .test-header h2 {
   display: inline-flex;
   align-items: center;
@@ -180,57 +189,84 @@ export default {
   font-size: 1.5rem;
   font-weight: 600;
   color: #e0e0e0;
+  margin-bottom: 0.5rem;
 }
+
+.test-description {
+  color: #a0a0a0;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
 .test-area {
   flex-grow: 1;
   display: flex;
-  justify-content: center;
-  align-items: center;
+  flex-direction: column;
+  justify-content: space-between;
   background-color: #252526;
   border-radius: 8px;
-  padding: 1rem;
-  overflow: auto;
+  overflow: hidden;
+  position: relative;
 }
+
 .keyboard-view {
   width: 100%;
-  max-width: 1200px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.keyboard-content {
+  flex-grow: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.5rem;
+  padding: 1rem;
+  margin: 1rem;
+  background: #1e1e1e;
+  border-radius: 8px;
+  border: 1px solid #333;
 }
+
 .test-info {
   text-align: center;
-  color: #a0a0a0;
+  margin-bottom: 1.5rem;
 }
+
 .test-info .status {
-  margin-top: 0.5rem;
   font-size: 1.1rem;
   color: #e0e0e0;
 }
+
 .keyboard-container {
-    display: flex;
-    gap: 1.5rem;
-    padding: 1rem;
-    background-color: #1a1a1a;
-    border-radius: 8px;
-    border: 1px solid #333;
+  display: flex;
+  gap: 1.5rem;
+  padding: 1rem;
+  background-color: #1a1a1a;
+  border-radius: 8px;
+  border: 1px solid #333;
+  max-width: 1200px;
+  width: 100%;
 }
+
 .keyboard-section {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
+
 .keyboard {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
+
 .keyboard-row {
   display: flex;
   justify-content: center;
   gap: 6px;
 }
+
 .key {
   display: inline-flex;
   align-items: center;
@@ -249,113 +285,115 @@ export default {
   user-select: none;
   flex-grow: 1;
 }
-.key.key-blank, .key.key-blank-f {
-    background-color: transparent;
-    border: none;
-}
-.key.key-blank-f {
-    flex-grow: 0.5;
-}
-.key.pressed {
-  background-color: #ff6b00;
-  border-color: #e66000;
-  color: white;
-}
-.key.utility {
-  background-color: #555;
-}
-.key.utility.pressed {
-  background-color: #ff6b00;
-}
-.key.active {
-  transform: translateY(2px);
-  border-bottom-width: 1px;
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
-}
-/* Special key sizes */
-.key.key-backspace { flex-grow: 2; }
-.key.key-tab { flex-grow: 1.5; }
-.key.key-backslash { flex-grow: 1.5; }
-.key.key-caps { flex-grow: 1.8; }
-.key.key-enter { flex-grow: 2.2; }
-.key.key-shift-left { flex-grow: 2.3; }
-.key.key-shift-right { flex-grow: 2.7; }
-.key.key-space { flex-grow: 6; }
 
-.function-keys {
-    margin-bottom: 1rem;
+.key.pressed {
+  background-color: #28a745;
+  border-bottom-width: 1px;
+  transform: translateY(2px);
 }
-.arrow-keys .keyboard-row:first-child {
-    justify-content: center;
+
+.key.active {
+  background-color: #ff6b00;
 }
-.arrow-keys .keyboard-row:last-child {
-    justify-content: space-between;
+
+.key.utility {
+  background-color: #333;
+  color: #ccc;
 }
+
+.key-space {
+  min-width: 250px;
+}
+
+.key-backspace {
+  min-width: 85px;
+}
+
+.key-tab {
+  min-width: 70px;
+}
+
+.key-caps {
+  min-width: 85px;
+}
+
+.key-enter {
+  min-width: 85px;
+}
+
+.key-shift-left {
+  min-width: 100px;
+}
+
+.key-shift-right {
+  min-width: 100px;
+}
+
+.key-blank {
+  background-color: transparent;
+  border-color: transparent;
+  pointer-events: none;
+}
+
+.key-blank-f {
+  background-color: transparent;
+  border-color: transparent;
+  pointer-events: none;
+  min-width: 20px;
+}
+
+/* --- Controls Bar --- */
 .controls-bar {
+  flex-shrink: 0;
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 1rem;
+  gap: 1.5rem;
+  padding: 1rem;
   width: 100%;
-  padding-top: 1.5rem;
-  margin-top: 1rem;
-  border-top: 1px solid #3c3c3c;
+  background-color: #2c2c2e;
+  border-top: 1px solid #444;
 }
 
+/* --- Common Elements --- */
 .action-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.6rem 1.2rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
   border-radius: 6px;
-  font-size: 0.9rem;
-  font-weight: 500;
+  border: none;
   cursor: pointer;
   transition: all 0.2s ease;
-  min-width: 140px;
-  border: 1px solid;
+  color: white;
 }
 
-.action-button:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
+.action-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.action-button.primary {
+  background-color: #ff6b00;
+}
+.action-button.primary:hover {
+  background-color: #e65c00;
 }
 
 .action-button.success {
-  background: #28a745;
-  color: white;
-  border-color: #28a745;
+  background-color: #28a745;
 }
-
 .action-button.success:hover {
-  background: #218838;
-  border-color: #1e7e34;
+  background-color: #218838;
 }
 
 .action-button.danger {
-  background: #dc3545;
-  color: white;
-  border-color: #dc3545;
+  background-color: #dc3545;
 }
-
 .action-button.danger:hover {
-  background: #c82333;
-  border-color: #bd2130;
-}
-
-.keyboard-section.side-keys {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.keyboard-spacer {
-    flex: 1;
-    min-height: 20px;
-}
-
-.keyboard.arrow-keys {
-    margin-top: auto;
+  background-color: #c82333;
 }
 </style> 

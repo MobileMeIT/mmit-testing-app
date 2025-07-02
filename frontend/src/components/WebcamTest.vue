@@ -1,7 +1,11 @@
 <template>
   <div class="webcam-test-container">
     <div class="test-header">
-      <h2><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-video"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg> Webcam Test</h2>
+      <h2>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-video"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+        Webcam Test
+      </h2>
+      <p class="test-description">Test your camera by checking the video feed below.</p>
     </div>
 
     <div class="test-area">
@@ -320,6 +324,13 @@ export default {
   font-size: 1.5rem;
   font-weight: 600;
   color: #e0e0e0;
+  margin-bottom: 0.5rem;
+}
+
+.test-description {
+  color: #a0a0a0;
+  font-size: 0.95rem;
+  margin: 0;
 }
 
 .test-area {
