@@ -467,7 +467,7 @@ export default {
   width: 100%;
   display: flex;
   justify-content: center;
-  gap: 1.5rem;
+  gap: 1rem;
   padding: 1rem;
   background-color: #2c2c2e;
   border-top: 1px solid #444;
@@ -475,17 +475,18 @@ export default {
 }
 
 .action-button {
+  min-width: 140px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
+  border-radius: 6px;
   font-size: 1rem;
   font-weight: 600;
-  border-radius: 6px;
-  border: none;
   cursor: pointer;
   transition: all 0.2s ease;
+  border: none;
   color: white;
 }
 

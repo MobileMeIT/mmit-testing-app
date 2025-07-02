@@ -450,30 +450,30 @@ export default {
 
 /* --- Controls Bar --- */
 .controls-bar {
-    flex-shrink: 0;
+    width: 100%;
     display: flex;
     justify-content: center;
-    align-items: center;
-    gap: 1.5rem;
+    gap: 1rem;
     padding: 1rem;
-    width: 100%;
     background-color: #2c2c2e;
     border-top: 1px solid #444;
+    margin-top: auto;
 }
 
 /* --- Common Elements --- */
 .action-button {
+    min-width: 140px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
     padding: 0.75rem 1.5rem;
+    border-radius: 6px;
     font-size: 1rem;
     font-weight: 600;
-    border-radius: 6px;
-    border: none;
     cursor: pointer;
     transition: all 0.2s ease;
+    border: none;
     color: white;
 }
 

@@ -369,84 +369,75 @@ export default {
 /* Sidebar Footer */
 .sidebar-footer {
   margin-top: auto;
-  padding-top: 1rem; /* Reduced padding */
-  border-top: 1px solid #262626;
-  flex-shrink: 0;
+  padding: 1rem;
+  border-top: 1px solid #333;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
-.footer-summary {
-  text-align: center;
+.detailed-summary {
   margin-bottom: 1rem;
-  padding: 0.85rem 0.75rem; /* Adjusted for single line */
-  border-radius: 6px;
-  border: 1px solid #444;
-  transition: all 0.3s ease;
-  line-height: 1.2;
 }
 
-.footer-summary.in-progress {
-    background-color: #1f1f1f;
-    border-color: #444;
-}
-
-.footer-summary.completed-success {
-    background-color: rgba(40, 167, 69, 0.15);
-    border-color: #28a745;
-}
-
-.footer-summary.completed-success .summary-text {
-    color: #33ff66;
-}
-
-.footer-summary.completed-fail {
-    background-color: rgba(220, 53, 69, 0.15);
-    border-color: #dc3545;
-}
-
-.footer-summary.completed-fail .summary-text {
-    color: #ff6677;
-}
-
-.summary-text {
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: #d4d4d4;
-    transition: color 0.3s ease;
-}
-
-.action-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  border-radius: 6px;
-  font-size: 1rem;
+.detailed-summary h4 {
+  color: #e0e0e0;
+  font-size: 1.1rem;
   font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border: none;
-  color: white;
+  margin: 0 0 0.5rem 0;
 }
 
-.action-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.detailed-summary p {
+  color: #a0a0a0;
+  margin: 0 0 1rem 0;
+  font-size: 0.9rem;
 }
 
-.action-button.danger {
-  background-color: #dc3545;
+.result-list {
+  margin-bottom: 0.75rem;
 }
 
-.action-button.success {
-  background-color: #28a745;
+.result-list:last-child {
+  margin-bottom: 0;
 }
 
-.action-button.primary {
+.result-list p {
+  margin: 0 0 0.25rem 0;
+  font-weight: 500;
+}
+
+.result-list.passed p {
+  color: #28a745;
+}
+
+.result-list.failed p {
+  color: #dc3545;
+}
+
+.result-list ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.result-list li {
+  color: #a0a0a0;
+  font-size: 0.9rem;
+  padding: 0.25rem 0;
+}
+
+.sidebar-footer .action-button {
+  width: 100%;
+  justify-content: center;
+  font-size: 0.95rem;
+  padding: 0.6rem 1rem;
+}
+
+.sidebar-footer .action-button.primary {
   background-color: #007bff;
 }
 
-.action-button.secondary {
+.sidebar-footer .action-button.secondary {
   background-color: #6c757d;
 }
 

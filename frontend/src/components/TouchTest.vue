@@ -408,14 +408,14 @@ export default {
 
 .test-area {
   flex: 1;
-  background-color: #252526;
+  background-color: #1e1e1e;
   border-radius: 8px;
   position: relative;
   overflow: hidden;
-  margin-bottom: 1rem;
   min-height: 400px;
   display: flex;
   flex-direction: column;
+  border: 1px solid #333;
 }
 
 .challenge-area {
@@ -595,12 +595,18 @@ export default {
 }
 
 .controls-bar {
+  width: 100%;
   display: flex;
   justify-content: center;
   gap: 1rem;
+  padding: 1rem;
+  background-color: #2c2c2e;
+  border-top: 1px solid #444;
+  margin-top: auto;
 }
 
 .action-button {
+  min-width: 140px;
   display: inline-flex;
   align-items: center;
   justify-content: center;

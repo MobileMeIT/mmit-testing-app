@@ -261,10 +261,11 @@ export default {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    background-color: #252526;
+    background-color: #1e1e1e;
     border-radius: 8px;
     overflow: hidden;
     position: relative;
+    border: 1px solid #333;
 }
 
 .mouse-view {

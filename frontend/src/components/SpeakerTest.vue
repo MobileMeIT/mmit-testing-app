@@ -446,19 +446,19 @@ export default {
 }
 
 .action-button {
+  min-width: 140px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  font-size: 0.95rem;
-  font-weight: 500;
-  border-radius: 4px;
-  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  color: #000;
-  background: #fff;
+  border: none;
+  color: white;
 }
 
 .action-button:disabled {
@@ -544,16 +544,13 @@ export default {
 }
 
 .controls-bar {
-  flex-shrink: 0;
+  width: 100%;
   display: flex;
   justify-content: center;
-  align-items: center;
-  gap: 1.5rem;
+  gap: 1rem;
   padding: 1rem;
-  width: 100%;
   background-color: #2c2c2e;
   border-top: 1px solid #444;
   margin-top: auto;
-  box-sizing: border-box;
 }
 </style> 
