@@ -114,7 +114,8 @@ export default {
       retryTimer: null,
       checkingPermission: true,
       availableCameras: [],
-      selectedCameraId: ''
+      selectedCameraId: '',
+      testCompleted: false
     }
   },
   mounted() {
@@ -311,12 +312,20 @@ export default {
     },
     
     completeTest() {
+      if (this.testCompleted) {
+        return;
+      }
       this.$emit('test-completed', 'webcam')
+      this.testCompleted = true;
       this.stopCamera()
     },
     
     failTest() {
+      if (this.testCompleted) {
+        return;
+      }
       this.$emit('test-failed', 'webcam')
+      this.testCompleted = true;
       this.stopCamera()
     },
     

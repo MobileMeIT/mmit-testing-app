@@ -59,9 +59,11 @@
 
     <div class="controls-bar">
       <button @click="failTest" class="action-button danger">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-x"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         <span>Not Working</span>
       </button>
       <button @click="completeTest" class="action-button success">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-check"><polyline points="20 6 9 17 4 12"></polyline></svg>
         <span>Working</span>
       </button>
     </div>
@@ -94,7 +96,8 @@ export default {
         bottom: 100,   // Increased from 40
         left: 100,     // Increased from 80
         right: 100     // Increased from 80
-      }
+      },
+      testCompleted: false
     }
   },
   computed: {
@@ -354,11 +357,21 @@ export default {
     },
     
     failTest() {
+      if (this.testCompleted) {
+        return;
+      }
       this.$emit('test-failed', 'touch');
+      this.testCompleted = true;
+      this.clearSuccessTimer();
     },
 
     completeTest() {
+      if (this.testCompleted) {
+        return;
+      }
       this.$emit('test-completed', 'touch');
+      this.testCompleted = true;
+      this.clearSuccessTimer();
     }
   }
 }
@@ -592,24 +605,22 @@ export default {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.6rem 1.2rem;
+  padding: 0.75rem 1.5rem;
   border-radius: 6px;
-  font-size: 0.9rem;
-  font-weight: 500;
+  font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  min-width: 140px;
-  border: 1px solid transparent;
+  border: none;
+  color: white;
 }
 
 .action-button.danger {
   background-color: #dc3545;
-  color: #fff;
 }
 
 .action-button.success {
   background-color: #28a745;
-  color: #fff;
 }
 
 @keyframes stroke {

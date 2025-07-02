@@ -98,7 +98,8 @@ export default {
             leftReleasing: false,
             rightReleasing: false,
             middleReleasing: false,
-            scrollTimeout: null
+            scrollTimeout: null,
+            testCompleted: false
         }
     },
     mounted() {
@@ -175,10 +176,18 @@ export default {
             }, 150);
         },
         completeTest() {
+            if (this.testCompleted) {
+                return;
+            }
             this.$emit('test-completed', 'mouse');
+            this.testCompleted = true;
         },
         failTest() {
+            if (this.testCompleted) {
+                return;
+            }
             this.$emit('test-failed', 'mouse');
+            this.testCompleted = true;
         },
         resetTest() {
             this.leftPressed = false;

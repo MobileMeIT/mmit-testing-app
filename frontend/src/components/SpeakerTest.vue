@@ -99,7 +99,8 @@ export default {
       testSequence: ['Left', 'Right', 'Both'],
       testTimeout: null,
       availableSpeakers: [],
-      selectedSpeakerId: ''
+      selectedSpeakerId: '',
+      testCompleted: false
     }
   },
   mounted() {
@@ -221,13 +222,21 @@ export default {
     },
 
     completeTest() {
-      this.$emit('test-completed', 'speakers')
-      this.cleanup()
+      if (this.testCompleted || this.isPlaying) {
+        return;
+      }
+      this.$emit('test-completed', 'speakers');
+      this.testCompleted = true;
+      this.cleanup();
     },
 
     failTest() {
-      this.$emit('test-failed', 'speakers')
-      this.cleanup()
+      if (this.testCompleted || this.isPlaying) {
+        return;
+      }
+      this.$emit('test-failed', 'speakers');
+      this.testCompleted = true;
+      this.cleanup();
     },
 
     cleanup() {

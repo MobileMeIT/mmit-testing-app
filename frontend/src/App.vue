@@ -200,26 +200,27 @@ export default {
     },
     onTestFailed(testType) {
       this.results[testType] = false;
+      // Don't auto advance on failure to let user see the error
     },
     autoAdvance(currentTest) {
-        const tests = ['webcam', 'microphone', 'speakers', 'keyboard', 'mouse', 'touch', 'battery'];
-        const currentIndex = tests.indexOf(currentTest);
-        if (currentIndex < tests.length - 1) {
-          // Find next test that is not yet completed
-          for(let i = currentIndex + 1; i < tests.length; i++) {
-            if (this.results[tests[i]] === null) {
-              this.setActiveTest(tests[i]);
-              return;
-            }
-          }
-          // If all next tests are done, look from start
-           for(let i = 0; i < currentIndex; i++) {
-            if (this.results[tests[i]] === null) {
-              this.setActiveTest(tests[i]);
-              return;
-            }
+      const tests = ['webcam', 'microphone', 'speakers', 'keyboard', 'mouse', 'touch', 'battery'];
+      const currentIndex = tests.indexOf(currentTest);
+      if (currentIndex < tests.length - 1) {
+        // Find next test that is not yet completed
+        for(let i = currentIndex + 1; i < tests.length; i++) {
+          if (this.results[tests[i]] === null) {
+            this.setActiveTest(tests[i]);
+            return;
           }
         }
+        // If all next tests are done, look from start
+        for(let i = 0; i < currentIndex; i++) {
+          if (this.results[tests[i]] === null) {
+            this.setActiveTest(tests[i]);
+            return;
+          }
+        }
+      }
     },
     resetTests() {
         this.activeTest = 'webcam';
@@ -414,36 +415,39 @@ export default {
 }
 
 .action-button {
-  width: 100%;
-  padding: 0.6rem 1rem; /* Reduced padding */
-  border: 1px solid transparent;
-  border-radius: 6px; /* Sharper radius */
-  font-size: 0.9rem; /* Reduced font size */
-  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  margin-top: 0.5rem;
+  transition: all 0.2s ease;
+  border: none;
+  color: white;
+}
+
+.action-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.action-button.danger {
+  background-color: #dc3545;
+}
+
+.action-button.success {
+  background-color: #28a745;
 }
 
 .action-button.primary {
-  background: #ff6b00;
-  color: white;
-  border-color: #ff6b00;
-}
-.action-button.primary:hover {
-  background: #e66000;
-  border-color: #e66000;
+  background-color: #007bff;
 }
 
 .action-button.secondary {
-  background: transparent;
-  color: #a0a0a0;
-  border-color: #444;
-}
-.action-button.secondary:hover {
-  background: #222;
-  color: #fff;
-  border-color: #555;
+  background-color: #6c757d;
 }
 
 /* Main Content */

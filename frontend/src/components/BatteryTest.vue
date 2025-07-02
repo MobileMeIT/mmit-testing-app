@@ -102,20 +102,34 @@ export default {
       testPhase: 'initial',
       timer: 5,
       initialDelay: 2,
-      timerInterval: null
+      timerInterval: null,
+      testStarted: false,
+      initialBatteryLevel: 0,
+      testCompleted: false,
+      phasesCompleted: {
+        charging1: false,
+        discharging: false,
+        charging2: false
+      }
     }
   },
   async mounted() {
     try {
       if ('getBattery' in navigator) {
-        this.batterySupported = true
         this.batteryManager = await navigator.getBattery()
-        this.setupBatteryListeners()
-        this.updateBatteryStatus()
+        if (this.batteryManager) {
+          this.batterySupported = true
+          this.setupBatteryListeners()
+          this.updateBatteryStatus()
+          this.initialBatteryLevel = this.batteryManager.level
+        } else {
+          throw new Error('Battery manager not available')
+        }
       }
     } catch (error) {
       console.error('Battery API error:', error)
       this.batterySupported = false
+      this.cleanup()
     }
   },
   beforeUnmount() {
@@ -132,58 +146,78 @@ export default {
     updateBatteryStatus() {
       if (!this.batteryManager) return
       
+      const previousChargingState = this.isCharging
       this.isCharging = this.batteryManager.charging
       this.batteryLevel = Math.round(this.batteryManager.level * 100)
       
       // Start test sequence when charger is first connected
-      if (this.testPhase === 'initial' && this.isCharging) {
+      if (this.testPhase === 'initial' && this.isCharging && !this.testStarted) {
+        this.testStarted = true
         this.startInitialDelay()
+      }
+
+      // Handle charging state changes
+      if (previousChargingState !== this.isCharging) {
+        this.handleChargingChange()
       }
     },
 
     handleChargingChange() {
-      this.updateBatteryStatus()
-      
-      // Handle phase transitions based on charging state
-      if (this.testPhase === 'charging1' && !this.isCharging) {
-        this.failTest('Charger disconnected too early')
-      } else if (this.testPhase === 'discharging') {
-        if (this.isCharging) {
-          // If charger is connected during discharge phase, move to next phase
-          clearInterval(this.timerInterval) // Clear any existing timer
-          this.startCharging2Phase()
-        } else {
-          // Start the discharge timer when charger is unplugged
-          this.startTimer(() => {
+      if (!this.batteryManager) return
+
+      switch (this.testPhase) {
+        case 'charging1':
+          if (!this.isCharging) {
+            this.failTest('Charger disconnected too early')
+          }
+          break
+
+        case 'discharging':
+          if (this.isCharging) {
+            clearInterval(this.timerInterval)
+            this.phasesCompleted.discharging = true
             this.startCharging2Phase()
-          })
-        }
+          }
+          break
+
+        case 'charging2':
+          if (!this.isCharging) {
+            this.failTest('Charger disconnected during final charging phase')
+          }
+          break
       }
     },
 
     startInitialDelay() {
-      if (this.timerInterval) {
-        clearInterval(this.timerInterval)
-      }
+      this.clearTimer()
       let delay = this.initialDelay
       this.timerInterval = setInterval(() => {
+        if (!this.isCharging) {
+          this.clearTimer()
+          return
+        }
         delay--
         this.initialDelay = delay
         if (delay <= 0) {
-          clearInterval(this.timerInterval)
+          this.clearTimer()
           this.startCharging1Phase()
         }
       }, 1000)
     },
 
     startCharging1Phase() {
-      if (this.timerInterval) {
-        clearInterval(this.timerInterval)
+      if (!this.isCharging) {
+        this.failTest('Charger must be connected to start charging phase')
+        return
       }
+
+      this.clearTimer()
       this.testPhase = 'charging1'
       this.timer = 5
+
       this.startTimer(() => {
         if (this.isCharging) {
+          this.phasesCompleted.charging1 = true
           this.testPhase = 'discharging'
           this.timer = 5
         } else {
@@ -193,14 +227,20 @@ export default {
     },
 
     startCharging2Phase() {
-      if (this.timerInterval) {
-        clearInterval(this.timerInterval)
+      if (!this.isCharging) {
+        this.failTest('Charger must be connected to start final charging phase')
+        return
       }
+
+      this.clearTimer()
       this.testPhase = 'charging2'
       this.timer = 5
+
       this.startTimer(() => {
         if (this.isCharging) {
+          this.phasesCompleted.charging2 = true
           this.testPhase = 'complete'
+          this.testCompleted = true
         } else {
           this.failTest('Charger disconnected during final charging phase')
         }
@@ -208,41 +248,63 @@ export default {
     },
 
     startTimer(callback) {
-      if (this.timerInterval) {
-        clearInterval(this.timerInterval)
-      }
-
+      this.clearTimer()
       let remainingTime = this.timer
+      
       this.timerInterval = setInterval(() => {
+        if (!this.batterySupported || !this.batteryManager) {
+          this.clearTimer()
+          this.failTest('Battery API became unavailable')
+          return
+        }
+        
         remainingTime--
         this.timer = remainingTime
+        
         if (remainingTime <= 0) {
-          clearInterval(this.timerInterval)
+          this.clearTimer()
           callback()
         }
       }, 1000)
     },
 
+    clearTimer() {
+      if (this.timerInterval) {
+        clearInterval(this.timerInterval)
+        this.timerInterval = null
+      }
+    },
+
     completeTest() {
+      if (this.testCompleted) {
+        return;
+      }
       this.$emit('test-completed', 'battery')
-      this.cleanup()
+      this.testCompleted = true;
+      this.cleanup();
     },
 
     failTest(reason = '') {
-      console.error('Battery test failed:', reason)
-      this.$emit('test-failed', 'battery')
-      this.cleanup()
+      console.error('Battery test failed:', reason);
+      this.$emit('test-failed', 'battery');
+      this.testCompleted = true;
+      this.cleanup();
     },
 
     cleanup() {
-      if (this.timerInterval) {
-        clearInterval(this.timerInterval)
-      }
+      this.clearTimer()
       
       if (this.batteryManager) {
         this.batteryManager.removeEventListener('chargingchange', this.handleChargingChange)
         this.batteryManager.removeEventListener('levelchange', this.updateBatteryStatus)
       }
+    }
+  },
+  computed: {
+    allPhasesCompleted() {
+      return this.phasesCompleted.charging1 && 
+             this.phasesCompleted.discharging && 
+             this.phasesCompleted.charging2
     }
   }
 }
@@ -303,11 +365,11 @@ export default {
   margin: 2rem auto;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.5rem;
   background: #2c2c2e;
   border-radius: 12px;
   border: 1px solid #333;
-  padding: 2rem;
+  padding: 1.5rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 

@@ -121,6 +121,7 @@ export default {
                 navigation: [],
                 arrows: [],
             },
+            testCompleted: false
         }
     },
     computed: {
@@ -184,10 +185,18 @@ export default {
             return null;
         },
         completeTest() {
+            if (this.testCompleted) {
+                return;
+            }
             this.$emit('test-completed', 'keyboard');
+            this.testCompleted = true;
         },
         failTest() {
+            if (this.testCompleted) {
+                return;
+            }
             this.$emit('test-failed', 'keyboard');
+            this.testCompleted = true;
         },
         resetTest() {
             this.initializeKeyboard();
