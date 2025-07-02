@@ -64,6 +64,25 @@
               :class="{ blurred: loading || error }"
             ></video>
           </div>
+          
+          <div class="camera-selector">
+            <label for="cameraSelect">Camera:</label>
+            <select 
+              id="cameraSelect" 
+              v-model="selectedCameraId" 
+              @change="switchCamera"
+              :disabled="loading || availableCameras.length <= 0"
+            >
+              <option v-if="availableCameras.length <= 0" value="">No cameras found</option>
+              <option 
+                v-for="camera in availableCameras" 
+                :key="camera.deviceId" 
+                :value="camera.deviceId"
+              >
+                {{ camera.label || `Camera ${camera.deviceId.slice(0, 4)}...` }}
+              </option>
+            </select>
+          </div>
         </div>
         <div class="controls-bar">
           <button @click="failTest" class="action-button danger">
@@ -93,7 +112,9 @@ export default {
       snapshotTaken: false,
       showRetryButton: false,
       retryTimer: null,
-      checkingPermission: true
+      checkingPermission: true,
+      availableCameras: [],
+      selectedCameraId: ''
     }
   },
   mounted() {
@@ -173,13 +194,17 @@ export default {
           video: {
             width: { ideal: 1280 },
             height: { ideal: 720 },
-            facingMode: 'user'
+            facingMode: 'user',
+            ...(this.selectedCameraId && { deviceId: { exact: this.selectedCameraId } })
           }
         }
         
         this.stream = await navigator.mediaDevices.getUserMedia(constraints)
         console.log('Camera stream obtained:', this.stream)
         this.permissionGranted = true
+        
+        // Enumerate available cameras after permission is granted
+        await this.enumerateCameras()
         
         // Wait for Vue to update the DOM
         await this.$nextTick()
@@ -208,6 +233,31 @@ export default {
           this.error = `Camera error: ${err.message}`
         }
       }
+    },
+    
+    async enumerateCameras() {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices()
+        this.availableCameras = devices.filter(device => device.kind === 'videoinput')
+        
+        // If we haven't selected a camera yet and we have available cameras,
+        // select the first one
+        if (!this.selectedCameraId && this.availableCameras.length > 0) {
+          this.selectedCameraId = this.availableCameras[0].deviceId
+        }
+        
+        console.log('Available cameras:', this.availableCameras)
+      } catch (err) {
+        console.error('Error enumerating cameras:', err)
+      }
+    },
+
+    async switchCamera() {
+      if (this.loading) return
+      
+      this.loading = true
+      this.stopCamera()
+      await this.requestPermission()
     },
     
     setupCamera() {
@@ -510,5 +560,46 @@ export default {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+.camera-selector {
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  background: #1e1e1e;
+  border-top: 1px solid #333;
+}
+
+.camera-selector label {
+  color: #e0e0e0;
+  font-size: 0.95rem;
+}
+
+.camera-selector select {
+  padding: 0.5rem;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background: #2c2c2e;
+  color: #e0e0e0;
+  font-size: 0.95rem;
+  cursor: pointer;
+  min-width: 200px;
+}
+
+.camera-selector select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.camera-selector select:focus {
+  outline: none;
+  border-color: #ff6b00;
+}
+
+.camera-selector select option {
+  background: #2c2c2e;
+  color: #e0e0e0;
 }
 </style> 

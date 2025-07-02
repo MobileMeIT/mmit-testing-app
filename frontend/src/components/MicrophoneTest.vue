@@ -62,6 +62,24 @@
           <div class="volume-meter">
             <div class="volume-bar" :style="{ width: volumeLevel + '%' }"></div>
           </div>
+          <div class="mic-selector">
+            <label for="micSelect">Microphone:</label>
+            <select 
+              id="micSelect" 
+              v-model="selectedMicId" 
+              @change="switchMicrophone"
+              :disabled="loading || availableMics.length <= 0"
+            >
+              <option v-if="availableMics.length <= 0" value="">No microphones found</option>
+              <option 
+                v-for="mic in availableMics" 
+                :key="mic.deviceId" 
+                :value="mic.deviceId"
+              >
+                {{ mic.label || `Microphone ${mic.deviceId.slice(0, 4)}...` }}
+              </option>
+            </select>
+          </div>
         </div>
         <div class="controls-bar">
           <button @click="failTest" class="action-button danger">
@@ -96,7 +114,9 @@ export default {
       waveformDataArray: null,
       canvasCtx: null,
       canvasWidth: 0,
-      canvasHeight: 0
+      canvasHeight: 0,
+      availableMics: [],
+      selectedMicId: ''
     }
   },
   mounted() {
@@ -168,12 +188,17 @@ export default {
           audio: {
             echoCancellation: true,
             noiseSuppression: true,
-            autoGainControl: true
+            autoGainControl: true,
+            ...(this.selectedMicId && { deviceId: { exact: this.selectedMicId } })
           }
         }
 
         this.stream = await navigator.mediaDevices.getUserMedia(constraints)
         this.permissionGranted = true
+        
+        // Enumerate available microphones after permission is granted
+        await this.enumerateMicrophones()
+        
         this.setupAudioAnalysis()
       } catch (err) {
         console.error('Microphone access error:', err)
@@ -189,6 +214,31 @@ export default {
           this.error = `Microphone error: ${err.message}`
         }
       }
+    },
+
+    async enumerateMicrophones() {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices()
+        this.availableMics = devices.filter(device => device.kind === 'audioinput')
+        
+        // If we haven't selected a mic yet and we have available mics,
+        // select the first one
+        if (!this.selectedMicId && this.availableMics.length > 0) {
+          this.selectedMicId = this.availableMics[0].deviceId
+        }
+        
+        console.log('Available microphones:', this.availableMics)
+      } catch (err) {
+        console.error('Error enumerating microphones:', err)
+      }
+    },
+
+    async switchMicrophone() {
+      if (this.loading) return
+      
+      this.loading = true
+      this.cleanup()
+      await this.requestPermission()
     },
 
     setupAudioAnalysis() {
@@ -527,5 +577,45 @@ export default {
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+.mic-selector {
+  padding: 1rem 0 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  border-top: 1px solid #333;
+}
+
+.mic-selector label {
+  color: #e0e0e0;
+  font-size: 0.95rem;
+}
+
+.mic-selector select {
+  padding: 0.5rem;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background: #1a1a1a;
+  color: #e0e0e0;
+  font-size: 0.95rem;
+  cursor: pointer;
+  min-width: 200px;
+}
+
+.mic-selector select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.mic-selector select:focus {
+  outline: none;
+  border-color: #ff6b00;
+}
+
+.mic-selector select option {
+  background: #1a1a1a;
+  color: #e0e0e0;
 }
 </style>
