@@ -36,6 +36,7 @@
                     </div>
                 </div>
               </div>
+              <div class="keyboard-spacer"></div>
               <div class="keyboard arrow-keys">
                  <div v-for="(row, rowIndex) in keyboardLayout.arrows" :key="`arrow-row-${rowIndex}`" class="keyboard-row">
                     <div v-for="key in row" :key="key.code" :data-code="key.code" class="key" :class="[key.style, { pressed: key.pressed, active: key.active }]">
@@ -321,23 +322,40 @@ export default {
   cursor: not-allowed;
 }
 
-.action-button.danger {
-  background-color: #dc3545;
-  border-color: #dc3545;
-  color: #fff;
+.action-button.success {
+  background: #28a745;
+  color: white;
+  border-color: #28a745;
 }
-.action-button.danger:not(:disabled):hover {
-  background-color: #c82333;
+
+.action-button.success:hover {
+  background: #218838;
+  border-color: #1e7e34;
+}
+
+.action-button.danger {
+  background: #dc3545;
+  color: white;
+  border-color: #dc3545;
+}
+
+.action-button.danger:hover {
+  background: #c82333;
   border-color: #bd2130;
 }
 
-.action-button.success {
-  background-color: #ff6b00;
-  border-color: #ff6b00;
-  color: #fff;
+.keyboard-section.side-keys {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
-.action-button.success:not(:disabled):hover {
-  background-color: #e66000;
-  border-color: #cc5800;
+
+.keyboard-spacer {
+    flex: 1;
+    min-height: 20px;
+}
+
+.keyboard.arrow-keys {
+    margin-top: auto;
 }
 </style> 

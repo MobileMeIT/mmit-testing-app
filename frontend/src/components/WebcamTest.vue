@@ -36,28 +36,30 @@
       </div>
 
       <!-- Main Camera View -->
-      <div v-else class="camera-view">
-        <div class="video-container">
-          <div v-if="loading" class="video-overlay loading">
-            <div class="spinner"></div>
-            <p>Initializing camera...</p>
-          </div>
-          <div v-if="error" class="video-overlay error">
-             <div class="panel-icon error-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-alert-triangle"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+      <div v-else>
+        <div class="camera-view">
+          <div class="video-container">
+            <div v-if="loading" class="video-overlay loading">
+              <div class="spinner"></div>
+              <p>Initializing camera...</p>
             </div>
-            <h3>Camera Error</h3>
-            <p>{{ error }}</p>
-            <button @click="retryTest" class="action-button primary">Retry Test</button>
+            <div v-if="error" class="video-overlay error">
+               <div class="panel-icon error-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-alert-triangle"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+              </div>
+              <h3>Camera Error</h3>
+              <p>{{ error }}</p>
+              <button @click="retryTest" class="action-button primary">Retry Test</button>
+            </div>
+            <video
+              ref="videoElement"
+              autoplay
+              muted
+              playsinline
+              class="camera-preview"
+              :class="{ blurred: loading || error }"
+            ></video>
           </div>
-          <video
-            ref="videoElement"
-            autoplay
-            muted
-            playsinline
-            class="camera-preview"
-            :class="{ blurred: loading || error }"
-          ></video>
         </div>
         <div class="controls-bar">
           <button @click="failTest" class="action-button danger">
@@ -323,8 +325,8 @@ export default {
 .test-area {
   flex-grow: 1;
   display: flex;
-  justify-content: center;
-  align-items: center;
+  flex-direction: column;
+  justify-content: space-between;
   background-color: #252526;
   border-radius: 8px;
   overflow: hidden;
@@ -340,6 +342,7 @@ export default {
   text-align: center;
   padding: 2rem;
   color: #cccccc;
+  flex-grow: 1;
 }
 
 .state-panel h3 {
@@ -374,18 +377,25 @@ export default {
 /* --- Main Camera View --- */
 .camera-view {
   width: 100%;
-  height: 100%;
+  max-width: 600px;
+  margin: 1rem auto;
   display: flex;
   flex-direction: column;
+  background: #1e1e1e;
+  border-radius: 8px;
+  border: 1px solid #333;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 .video-container {
-  flex-grow: 1;
   position: relative;
   background-color: #000;
   display: flex;
   align-items: center;
   justify-content: center;
+  aspect-ratio: 16/9;
+  overflow: hidden;
+  border-radius: 8px;
 }
 
 .camera-preview {
@@ -427,8 +437,9 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 1rem;
+  gap: 1.5rem;
   padding: 1rem;
+  width: 100%;
   background-color: #2c2c2e;
   border-top: 1px solid #444;
 }
