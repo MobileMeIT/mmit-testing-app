@@ -11,9 +11,32 @@
     <div class="test-area">
       <div class="speaker-view">
         <div class="main-content">
-          <div class="panel-icon">
-             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-play-circle"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
+          <div class="speakers-container">
+            <div class="speaker-box" :class="{ active: currentTestStep === 'Left' || currentTestStep === 'Both' }">
+              <div class="speaker-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><circle cx="12" cy="14" r="4"></circle><line x1="12" y1="6" x2="12" y2="6"></line></svg>
+                <div class="wave-container" v-if="currentTestStep === 'Left' || currentTestStep === 'Both'">
+                  <div class="wave"></div>
+                  <div class="wave"></div>
+                  <div class="wave"></div>
+                </div>
+              </div>
+              <span class="speaker-label">Left</span>
+            </div>
+            
+            <div class="speaker-box" :class="{ active: currentTestStep === 'Right' || currentTestStep === 'Both' }">
+              <div class="speaker-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><circle cx="12" cy="14" r="4"></circle><line x1="12" y1="6" x2="12" y2="6"></line></svg>
+                <div class="wave-container" v-if="currentTestStep === 'Right' || currentTestStep === 'Both'">
+                  <div class="wave"></div>
+                  <div class="wave"></div>
+                  <div class="wave"></div>
+                </div>
+              </div>
+              <span class="speaker-label">Right</span>
+            </div>
           </div>
+
           <h3>Test your Speakers</h3>
           <p>Click the button below to play a test sound. The sound will play on the left, then right, then both speakers.</p>
 
@@ -24,7 +47,7 @@
             </span>
             <span v-else class="playing-indicator">
               <div class="audio-wave"></div>
-              Playing ({{ currentTestStep }})
+              Playing {{ currentTestStep === 'Both' ? 'Both Speakers' : currentTestStep + ' Speaker' }}
             </span>
           </button>
         </div>
@@ -237,9 +260,79 @@ export default {
   line-height: 1.6;
 }
 
-.panel-icon {
-  margin-bottom: 1rem;
+.speakers-container {
+  display: flex;
+  justify-content: center;
+  gap: 4rem;
+  margin-bottom: 2rem;
+}
+
+.speaker-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-radius: 12px;
+  background: #1a1a1a;
+  border: 2px solid #333;
+  transition: all 0.3s ease;
+}
+
+.speaker-box.active {
+  border-color: #ff6b00;
+  box-shadow: 0 0 15px rgba(255, 107, 0, 0.3);
+  background: #2a2a2a;
+}
+
+.speaker-icon {
+  position: relative;
+  color: #666;
+  transition: color 0.3s ease;
+}
+
+.speaker-box.active .speaker-icon {
   color: #ff6b00;
+}
+
+.speaker-label {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #999;
+}
+
+.speaker-box.active .speaker-label {
+  color: #ff6b00;
+}
+
+.wave-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.wave {
+  width: 3px;
+  height: 3px;
+  background-color: #ff6b00;
+  animation: wave-animation 1s infinite ease-in-out;
+}
+
+.wave:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.wave:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes wave-animation {
+  0%, 100% { height: 3px; }
+  50% { height: 15px; }
 }
 
 .action-button.large {
