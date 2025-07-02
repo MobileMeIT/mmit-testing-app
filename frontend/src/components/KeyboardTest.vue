@@ -25,7 +25,7 @@
                     <div class="keyboard-section function-row">
                         <div class="keyboard-row">
                             <div v-for="key in keyboardLayout.functions[0]" :key="key.code" :data-code="key.code"
-                                class="key" :class="[key.style, { pressed: key.pressed, active: key.active }]">
+                                class="key" :class="[key.style, { pressed: key.pressed, active: key.active, tested: key.tested, releasing: key.releasing }]">
                                 <span v-if="key.code !== 'blank'">{{ key.display }}</span>
                             </div>
                         </div>
@@ -36,7 +36,7 @@
                             <div v-for="(row, rowIndex) in keyboardLayout.main" :key="`row-${rowIndex}`"
                                 class="keyboard-row">
                                 <div v-for="key in row" :key="key.code" :data-code="key.code" class="key"
-                                    :class="[key.style, { pressed: key.pressed, active: key.active }]">
+                                    :class="[key.style, { pressed: key.pressed, active: key.active, tested: key.tested, releasing: key.releasing }]">
                                     <span>{{ key.display }}</span>
                                 </div>
                             </div>
@@ -47,7 +47,7 @@
                                 <div v-for="(row, rowIndex) in keyboardLayout.navigation" :key="`nav-row-${rowIndex}`"
                                     class="keyboard-row">
                                     <div v-for="key in row" :key="key.code" :data-code="key.code" class="key"
-                                        :class="[key.style, { pressed: key.pressed, active: key.active }]">
+                                        :class="[key.style, { pressed: key.pressed, active: key.active, tested: key.tested, releasing: key.releasing }]">
                                         <span>{{ key.display }}</span>
                                     </div>
                                 </div>
@@ -56,7 +56,7 @@
                                 <div v-for="(row, rowIndex) in keyboardLayout.arrows" :key="`arrow-row-${rowIndex}`"
                                     class="keyboard-row">
                                     <div v-for="key in row" :key="key.code" :data-code="key.code" class="key"
-                                        :class="[key.style, { pressed: key.pressed, active: key.active }]">
+                                        :class="[key.style, { pressed: key.pressed, active: key.active, tested: key.tested, releasing: key.releasing }]">
                                         <span v-if="key.code !== 'blank'">{{ key.display }}</span>
                                     </div>
                                 </div>
@@ -148,7 +148,7 @@ export default {
                         const isBlank = key.code === 'blank';
                         const display = isBlank ? '' : (key.display || key.code);
                         if (!isBlank);
-                        return { ...key, display, pressed: false, active: false, code: isBlank ? `blank-${Math.random()}` : key.code };
+                        return { ...key, display, pressed: false, active: false, releasing: false, tested: false, code: isBlank ? `blank-${Math.random()}` : key.code };
                     })
                 );
             }
@@ -157,14 +157,21 @@ export default {
             e.preventDefault();
             const key = this.findKey(e.code);
             if (key) {
+                key.releasing = false;
                 key.pressed = true;
                 key.active = true;
+                key.tested = true;
             }
         },
         handleKeyUp(e) {
             const key = this.findKey(e.code);
             if (key) {
+                key.pressed = false;
                 key.active = false;
+                key.releasing = true;
+                setTimeout(() => {
+                    if (key) key.releasing = false;
+                }, 150); // Match the keyRelease animation duration
             }
         },
         findKey(code) {
@@ -190,6 +197,28 @@ export default {
 </script>
 
 <style scoped>
+@keyframes keyPress {
+    0% {
+        transform: translateY(0);
+        border-bottom-width: 3px;
+    }
+    100% {
+        transform: translateY(2px);
+        border-bottom-width: 1px;
+    }
+}
+
+@keyframes keyRelease {
+    0% {
+        transform: translateY(2px);
+        border-bottom-width: 1px;
+    }
+    100% {
+        transform: translateY(0);
+        border-bottom-width: 3px;
+    }
+}
+
 .keyboard-test-container {
     width: 100%;
     height: 100%;
@@ -324,24 +353,49 @@ export default {
     border-bottom: 3px solid #333;
     font-family: 'Consolas', 'Monaco', monospace;
     font-size: 0.85rem;
-    transition: all 0.1s ease;
+    transition: background-color 0.05s cubic-bezier(0.4, 0, 0.2, 1);
     user-select: none;
     flex-grow: 1;
+    position: relative;
+    top: 0;
+}
+
+.key.tested {
+    background-color: #ff6b00;
 }
 
 .key.pressed {
-    background-color: #28a745;
-    border-bottom-width: 1px;
-    transform: translateY(2px);
+    animation: keyPress 0.1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.key.releasing {
+    animation: keyRelease 0.15s cubic-bezier(0.2, 0, 0.4, 1) forwards;
 }
 
 .key.active {
     background-color: #ff6b00;
+    animation: keyPress 0.1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    box-shadow: 0 0 5px rgba(255, 107, 0, 0.5);
 }
 
 .key.utility {
     background-color: #333;
     color: #ccc;
+}
+
+.key.utility.tested {
+    background-color: #ff6b00;
+    color: #fff;
+}
+
+.key.utility.pressed,
+.key.utility.active {
+    background-color: #ff6b00;
+    color: #fff;
+}
+
+.key.utility.releasing {
+    color: #fff;
 }
 
 .key-space {
