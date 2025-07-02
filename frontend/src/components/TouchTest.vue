@@ -16,7 +16,15 @@
       @mousemove.prevent="handlePointerMove" 
       @mouseup.prevent="handlePointerUp"
       @mouseleave="handleMouseLeave">
-      <div class="feedback-text" :class="{ success: stage === 'completed' }">
+      
+      <div v-if="stage !== 'idle'" class="progress-indicator">
+        <div class="progress-text">{{ completedChallenges }} challenges completed</div>
+        <div class="progress-bar">
+          <div class="progress-fill" :style="{ width: `${Math.min(completedChallenges * (100/5), 100)}%` }"></div>
+        </div>
+      </div>
+      
+      <div v-if="stage !== 'idle'" class="feedback-text" :class="{ success: currentChallenge.complete }">
         {{ feedbackText }}
       </div>
       
@@ -24,42 +32,28 @@
         <div class="tap-instruction">Tap anywhere to begin</div>
       </div>
       
-      <div v-if="stage !== 'idle' && stage !== 'completed'" class="target-container">
-        <!-- Tap Stage -->
-        <div v-if="stage === 'tap'" class="target tap-target" :style="tapTargetStyle"></div>
+      <div class="challenge-area">
+        <!-- Tap Challenge -->
+        <div v-if="stage === 'tap'" class="target-container">
+          <div class="target tap-target" :style="tapTargetStyle"></div>
+        </div>
 
-        <!-- Drag Stage -->
-        <template v-if="stage === 'drag'">
+        <!-- Drag Challenge -->
+        <div v-if="stage === 'drag'" class="target-container">
           <div class="target drag-target-area" :style="dragTargetStyle"></div>
           <div class="target drag-source" :style="dragSourceStyle"></div>
           <div class="drag-indicator" :style="dragIndicatorStyle">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
           </div>
-        </template>
+        </div>
 
-        <!-- Hold and Tap Stage -->
-        <template v-if="stage === 'holdAndTap'">
-          <div class="target hold-target" :class="{ held: holdTarget.isHeld }" :style="holdTargetStyle">
-            <div v-if="!holdTarget.isHeld" class="hold-indicator">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-            </div>
-            <div v-else class="hold-progress-ring">
-              <svg viewBox="0 0 36 36">
-                <path class="progress-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
-                <path class="progress-meter" :stroke-dasharray="`${holdProgress}, 100`" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
-              </svg>
-            </div>
-          </div>
-          <div v-if="showSecondTarget" class="target tap-target" :style="otherTapTargetStyle"></div>
-        </template>
-      </div>
-
-      <!-- Completion Animation -->
-      <div v-if="stage === 'completed'" class="completion-animation">
-        <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
-          <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
-          <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
-        </svg>
+        <!-- Success Animation -->
+        <div v-if="currentChallenge.complete" class="success-animation">
+          <svg class="checkmark-small" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+            <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+            <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+          </svg>
+        </div>
       </div>
     </div>
 
@@ -82,31 +76,32 @@ export default {
     const padding = 20;
 
     return {
-      stage: 'idle', // idle, tap, drag, holdAndTap, completed
+      stage: 'idle',
       feedbackText: 'Touch or click the screen to begin the test.',
+      completedChallenges: 0,
+      currentChallenge: { type: null, complete: false },
       
       tapTarget: { x: 0, y: 0, size: targetSize },
       dragSource: { x: 0, y: 0, size: targetSize, isDragging: false, touchId: null },
       dragTarget: { x: 0, y: 0, size: targetSize * 1.5 },
-      holdTarget: { x: 0, y: 0, size: targetSize, isHeld: false, touchId: null },
-      otherTapTarget: { x: 0, y: 0, size: targetSize },
       
       targetSize,
       padding,
-      holdTimer: null,
-      holdProgress: 0,
-      showSecondTarget: false,
-      holdDuration: 800 // ms to hold before showing second target
+      successTimer: null,
+      
+      safeAreaMargin: {
+        top: 150,      // Increased from 100
+        bottom: 100,   // Increased from 40
+        left: 100,     // Increased from 80
+        right: 100     // Increased from 80
+      }
     }
   },
   computed: {
     tapTargetStyle() { return this.getStyle(this.tapTarget); },
     dragSourceStyle() { return { ...this.getStyle(this.dragSource), transition: this.dragSource.isDragging ? 'none' : 'all 0.3s ease' }; },
     dragTargetStyle() { return this.getStyle(this.dragTarget); },
-    holdTargetStyle() { return this.getStyle(this.holdTarget); },
-    otherTapTargetStyle() { return this.getStyle(this.otherTapTarget); },
     dragIndicatorStyle() {
-      // Position indicator between drag source and target
       const sourceCenter = {
         x: this.dragSource.x + this.dragSource.size / 2,
         y: this.dragSource.y + this.dragSource.size / 2
@@ -118,7 +113,6 @@ export default {
       const midX = (sourceCenter.x + targetCenter.x) / 2;
       const midY = (sourceCenter.y + targetCenter.y) / 2;
       
-      // Calculate angle for arrow rotation
       const angle = Math.atan2(targetCenter.y - sourceCenter.y, targetCenter.x - sourceCenter.x) * 180 / Math.PI;
       
       return {
@@ -129,159 +123,150 @@ export default {
     }
   },
   mounted() {
-    // Initialize test area dimensions
     window.addEventListener('resize', this.handleResize);
+    this.calculateGridPositions();
   },
   beforeDestroy() {
     window.removeEventListener('resize', this.handleResize);
-    this.clearHoldTimer();
+    this.clearSuccessTimer();
   },
   methods: {
     getStyle(target) {
-        return { 
-            left: `${target.x}px`, top: `${target.y}px`, 
-            width: `${target.size}px`, height: `${target.size}px` 
+      return { 
+        left: `${target.x}px`, top: `${target.y}px`, 
+        width: `${target.size}px`, height: `${target.size}px` 
+      };
+    },
+    
+    calculateGridPositions() {
+      const challengeArea = document.querySelector('.challenge-area');
+      if (!challengeArea) return;
+      
+      setTimeout(() => {
+        const challengeArea = document.querySelector('.challenge-area');
+        if (!challengeArea) return;
+        
+        const rect = challengeArea.getBoundingClientRect();
+        this.safeAreaRect = {
+          left: this.safeAreaMargin.left,
+          top: this.safeAreaMargin.top,
+          width: rect.width - this.safeAreaMargin.left - this.safeAreaMargin.right,
+          height: rect.height - this.safeAreaMargin.top - this.safeAreaMargin.bottom
         };
+      }, 0);
+    },
+    
+    getRandomPosition() {
+      if (!this.safeAreaRect) {
+        const challengeArea = document.querySelector('.challenge-area');
+        if (!challengeArea) return { x: 100, y: 150 };
+        
+        const rect = challengeArea.getBoundingClientRect();
+        this.safeAreaRect = {
+          left: this.safeAreaMargin.left,
+          top: this.safeAreaMargin.top,
+          width: rect.width - this.safeAreaMargin.left - this.safeAreaMargin.right,
+          height: rect.height - this.safeAreaMargin.top - this.safeAreaMargin.bottom
+        };
+      }
+      
+      return {
+        x: this.safeAreaRect.left + Math.random() * this.safeAreaRect.width,
+        y: this.safeAreaRect.top + Math.random() * this.safeAreaRect.height
+      };
     },
     
     handleResize() {
+      this.calculateGridPositions();
+      
       if (this.stage !== 'idle') {
-        const testArea = document.querySelector('.test-area');
-        if (!testArea) return;
-        
-        const viewBox = testArea.getBoundingClientRect();
-        const centerX = viewBox.width / 2;
-        const centerY = viewBox.height / 2;
-        const spacing = Math.min(viewBox.width * 0.3, 150);
-        
-        if (this.stage === 'tap') {
-          this.tapTarget.x = centerX - this.targetSize / 2;
-          this.tapTarget.y = centerY - this.targetSize / 2;
-        } else if (this.stage === 'drag') {
-          this.dragSource.x = centerX - spacing - this.dragSource.size / 2;
-          this.dragSource.y = centerY - this.dragSource.size / 2;
-          this.dragTarget.x = centerX + spacing - this.dragTarget.size / 2;
-          this.dragTarget.y = centerY - this.dragTarget.size / 2;
-        } else if (this.stage === 'holdAndTap') {
-          this.holdTarget.x = centerX - spacing - this.holdTarget.size / 2;
-          this.holdTarget.y = centerY - this.holdTarget.size / 2;
-          this.otherTapTarget.x = centerX + spacing - this.otherTapTarget.size / 2;
-          this.otherTapTarget.y = centerY - this.otherTapTarget.size / 2;
-        }
+        this.setupCurrentChallenge();
       }
     },
     
     startTest() {
-      this.setupTapStage();
+      this.completedChallenges = 0;
+      this.setupNextChallenge();
+    },
+    
+    setupNextChallenge() {
+      this.clearSuccessTimer();
+      this.currentChallenge.complete = false;
+      
+      const challengeTypes = ['tap', 'drag'];
+      const randomType = challengeTypes[Math.floor(Math.random() * challengeTypes.length)];
+      
+      this.currentChallenge.type = randomType;
+      this.stage = randomType;
+      
+      this.setupCurrentChallenge();
+    },
+    
+    setupCurrentChallenge() {
+      switch (this.currentChallenge.type) {
+        case 'tap':
+          this.setupTapChallenge();
+          break;
+        case 'drag':
+          this.setupDragChallenge();
+          break;
+      }
     },
 
-    setupTapStage() {
-      const testArea = document.querySelector('.test-area');
-      if (!testArea) return;
-      
-      const viewBox = testArea.getBoundingClientRect();
-      const centerX = viewBox.width / 2;
-      const centerY = viewBox.height / 2;
-      
-      this.stage = 'tap';
+    setupTapChallenge() {
+      const position = this.getRandomPosition();
       this.feedbackText = 'Tap the circle.';
-      this.tapTarget.x = centerX - this.targetSize / 2;
-      this.tapTarget.y = centerY - this.targetSize / 2;
+      this.tapTarget.x = position.x - this.targetSize / 2;
+      this.tapTarget.y = position.y - this.targetSize / 2;
     },
 
-    setupDragStage() {
-      const testArea = document.querySelector('.test-area');
-      if (!testArea) return;
+    setupDragChallenge() {
+      const sourcePos = this.getRandomPosition();
+      let targetPos;
+      let distance;
+      const minDistance = 150; // Minimum drag distance
+      const maxDistance = 300; // Maximum drag distance to keep it reasonable
       
-      const viewBox = testArea.getBoundingClientRect();
-      this.stage = 'drag';
+      do {
+        targetPos = this.getRandomPosition();
+        distance = Math.sqrt(
+          Math.pow(sourcePos.x - targetPos.x, 2) + 
+          Math.pow(sourcePos.y - targetPos.y, 2)
+        );
+      } while (distance < minDistance || distance > maxDistance);
+      
       this.feedbackText = 'Drag the orange circle into the outlined circle.';
-      
-      // Calculate positions to be more centered with reasonable spacing
-      const centerX = viewBox.width / 2;
-      const centerY = viewBox.height / 2;
-      const spacing = Math.min(viewBox.width * 0.3, 150); // Reasonable spacing that scales with container width
-      
-      this.dragSource.x = centerX - spacing - this.dragSource.size / 2;
-      this.dragSource.y = centerY - this.dragSource.size / 2;
-      this.dragTarget.x = centerX + spacing - this.dragTarget.size / 2;
-      this.dragTarget.y = centerY - this.dragTarget.size / 2;
+      this.dragSource.x = sourcePos.x - this.dragSource.size / 2;
+      this.dragSource.y = sourcePos.y - this.dragSource.size / 2;
+      this.dragTarget.x = targetPos.x - this.dragTarget.size / 2;
+      this.dragTarget.y = targetPos.y - this.dragTarget.size / 2;
     },
 
-    setupHoldAndTapStage() {
-      const testArea = document.querySelector('.test-area');
-      if (!testArea) return;
+    showSuccessAndContinue() {
+      this.currentChallenge.complete = true;
+      this.completedChallenges++;
       
-      const viewBox = testArea.getBoundingClientRect();
-      this.stage = 'holdAndTap';
-      this.feedbackText = 'Hold the circle until the second circle appears, then tap it.';
+      this.clearSuccessTimer();
       
-      // Calculate positions to be more centered with reasonable spacing
-      const centerX = viewBox.width / 2;
-      const centerY = viewBox.height / 2;
-      const spacing = Math.min(viewBox.width * 0.3, 150); // Reasonable spacing that scales with container width
-      
-      this.holdTarget.x = centerX - spacing - this.holdTarget.size / 2;
-      this.holdTarget.y = centerY - this.holdTarget.size / 2;
-      this.otherTapTarget.x = centerX + spacing - this.otherTapTarget.size / 2;
-      this.otherTapTarget.y = centerY - this.otherTapTarget.size / 2;
-      
-      this.showSecondTarget = false;
-      this.holdProgress = 0;
-    },
-
-    completeStage() {
-      if (this.stage === 'tap') this.setupDragStage();
-      else if (this.stage === 'drag') this.setupHoldAndTapStage();
-      else if (this.stage === 'holdAndTap') this.completeTestFlow();
+      this.successTimer = setTimeout(() => {
+        this.setupNextChallenge();
+      }, 800);
     },
     
-    completeTestFlow() {
-      this.stage = 'completed';
-      this.feedbackText = 'Touch test passed!';
-      setTimeout(() => this.$emit('test-completed', 'touch'), 1500);
-    },
-
-    isInsideCircle(point, circle) {
-      const radius = circle.size / 2;
-      const circleCenterX = circle.x + radius;
-      const circleCenterY = circle.y + radius;
-      const distance = Math.sqrt(Math.pow(point.x - circleCenterX, 2) + Math.pow(point.y - circleCenterY, 2));
-      return distance <= radius;
-    },
-
-    startHoldTimer() {
-      this.clearHoldTimer();
-      this.holdProgress = 0;
-      
-      const startTime = Date.now();
-      const updateInterval = 30; // Update progress every 30ms
-      
-      this.holdTimer = setInterval(() => {
-        const elapsed = Date.now() - startTime;
-        this.holdProgress = Math.min(100, (elapsed / this.holdDuration) * 100);
-        
-        if (elapsed >= this.holdDuration) {
-          this.clearHoldTimer();
-          this.showSecondTarget = true;
-        }
-      }, updateInterval);
-    },
-    
-    clearHoldTimer() {
-      if (this.holdTimer) {
-        clearInterval(this.holdTimer);
-        this.holdTimer = null;
+    clearSuccessTimer() {
+      if (this.successTimer) {
+        clearTimeout(this.successTimer);
+        this.successTimer = null;
       }
     },
 
     handlePointerDown(e) {
-      const testArea = document.querySelector('.test-area');
-      if (!testArea) return;
+      const challengeArea = document.querySelector('.challenge-area');
+      if (!challengeArea) return;
       
       if (e.type === 'mousedown' && e.button !== 0) return;
       
-      const viewBox = testArea.getBoundingClientRect();
+      const rect = challengeArea.getBoundingClientRect();
       const touches = e.changedTouches || [e];
       
       if (this.stage === 'idle') {
@@ -289,25 +274,18 @@ export default {
         return;
       }
       
+      if (this.currentChallenge.complete) return;
+      
       for (let touch of touches) {
-        const touchId = touch.identifier ?? 'mouse';
-        const touchPoint = { x: touch.clientX - viewBox.left, y: touch.clientY - viewBox.top };
+        const touchId = touch.identifier ?? null;
+        const touchPoint = { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
         
         if (this.stage === 'tap' && this.isInsideCircle(touchPoint, this.tapTarget)) {
-            this.completeStage();
+          this.showSuccessAndContinue();
         } 
         else if (this.stage === 'drag' && this.isInsideCircle(touchPoint, this.dragSource)) {
-            this.dragSource.isDragging = true;
-            this.dragSource.touchId = touchId;
-        }
-        else if (this.stage === 'holdAndTap') {
-            if (this.isInsideCircle(touchPoint, this.holdTarget) && this.holdTarget.touchId === null) {
-                this.holdTarget.isHeld = true;
-                this.holdTarget.touchId = touchId;
-                this.startHoldTimer();
-            } else if (this.showSecondTarget && this.isInsideCircle(touchPoint, this.otherTapTarget)) {
-                this.completeStage();
-            }
+          this.dragSource.isDragging = true;
+          this.dragSource.touchId = touchId;
         }
       }
     },
@@ -320,46 +298,38 @@ export default {
         return;
       }
       
-      const testArea = document.querySelector('.test-area');
-      if (!testArea) return;
+      const challengeArea = document.querySelector('.challenge-area');
+      if (!challengeArea) return;
       
-      const viewBox = testArea.getBoundingClientRect();
+      const rect = challengeArea.getBoundingClientRect();
       const touches = e.changedTouches || [e];
       for (let touch of touches) {
         if ((touch.identifier ?? 'mouse') === this.dragSource.touchId) {
-          this.dragSource.x = touch.clientX - viewBox.left - this.targetSize / 2;
-          this.dragSource.y = touch.clientY - viewBox.top - this.targetSize / 2;
+          this.dragSource.x = touch.clientX - rect.left - this.targetSize / 2;
+          this.dragSource.y = touch.clientY - rect.top - this.targetSize / 2;
         }
       }
     },
 
     handlePointerUp(e) {
-      const testArea = document.querySelector('.test-area');
-      if (!testArea) return;
+      const challengeArea = document.querySelector('.challenge-area');
+      if (!challengeArea) return;
       
       const touches = e.changedTouches || [e];
       for (let touch of touches) {
-        const touchId = touch.identifier ?? 'mouse';
+        const touchId = touch.identifier ?? null;
+        
         if (this.stage === 'drag' && touchId === this.dragSource.touchId) {
-            this.dragSource.isDragging = false;
-            this.dragSource.touchId = null;
-            const sourceCenter = { x: this.dragSource.x + this.targetSize/2, y: this.dragSource.y + this.targetSize/2 };
-            if (this.isInsideCircle(sourceCenter, this.dragTarget)) {
-                this.completeStage();
-            } else {
-                const viewBox = testArea.getBoundingClientRect();
-                const centerX = viewBox.width / 2;
-                const centerY = viewBox.height / 2;
-                const spacing = Math.min(viewBox.width * 0.3, 150);
-                
-                this.dragSource.x = centerX - spacing - this.dragSource.size / 2;
-                this.dragSource.y = centerY - this.dragSource.size / 2;
-            }
-        }
-        else if (this.stage === 'holdAndTap' && touchId === this.holdTarget.touchId) {
-            this.holdTarget.isHeld = false;
-            this.holdTarget.touchId = null;
-            this.clearHoldTimer();
+          this.dragSource.isDragging = false;
+          this.dragSource.touchId = null;
+          const sourceCenter = { x: this.dragSource.x + this.targetSize/2, y: this.dragSource.y + this.targetSize/2 };
+          if (this.isInsideCircle(sourceCenter, this.dragTarget)) {
+            this.showSuccessAndContinue();
+          } else {
+            const sourcePos = this.getRandomPosition();
+            this.dragSource.x = sourcePos.x - this.dragSource.size / 2;
+            this.dragSource.y = sourcePos.y - this.dragSource.size / 2;
+          }
         }
       }
     },
@@ -369,23 +339,18 @@ export default {
         this.dragSource.isDragging = false;
         this.dragSource.touchId = null;
         
-        const testArea = document.querySelector('.test-area');
-        if (!testArea) return;
-        
-        const viewBox = testArea.getBoundingClientRect();
-        const centerX = viewBox.width / 2;
-        const centerY = viewBox.height / 2;
-        const spacing = Math.min(viewBox.width * 0.3, 150);
-        
-        this.dragSource.x = centerX - spacing - this.dragSource.size / 2;
-        this.dragSource.y = centerY - this.dragSource.size / 2;
+        const sourcePos = this.getRandomPosition();
+        this.dragSource.x = sourcePos.x - this.dragSource.size / 2;
+        this.dragSource.y = sourcePos.y - this.dragSource.size / 2;
       }
-      
-      if (this.stage === 'holdAndTap' && this.holdTarget.isHeld) {
-        this.holdTarget.isHeld = false;
-        this.holdTarget.touchId = null;
-        this.clearHoldTimer();
-      }
+    },
+    
+    isInsideCircle(point, circle) {
+      const radius = circle.size / 2;
+      const circleCenterX = circle.x + radius;
+      const circleCenterY = circle.y + radius;
+      const distance = Math.sqrt(Math.pow(point.x - circleCenterX, 2) + Math.pow(point.y - circleCenterY, 2));
+      return distance <= radius;
     },
     
     failTest() {
@@ -435,29 +400,74 @@ export default {
   position: relative;
   overflow: hidden;
   margin-bottom: 1rem;
-  min-height: 300px;
+  min-height: 400px;
   display: flex;
-  justify-content: center;
-  align-items: center;
+  flex-direction: column;
+}
+
+.challenge-area {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+}
+
+.progress-indicator {
+  position: absolute;
+  top: 0.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  z-index: 30;
+  text-align: center;
+}
+
+.progress-text {
+  color: #a0a0a0;
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+}
+
+.progress-bar {
+  height: 6px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: #ff6b00;
+  border-radius: 3px;
+  transition: width 0.3s ease;
 }
 
 .start-prompt {
+  position: absolute;
+  top: 0;
+  left: 0;
   display: flex;
   justify-content: center;
   align-items: center;
   width: 100%;
   height: 100%;
+  z-index: 15;
 }
 
 .tap-instruction {
-  color: #a0a0a0;
-  font-size: 1.2rem;
+  color: #e0e0e0;
+  font-size: 1.5rem;
+  font-weight: 500;
   animation: pulse 2s infinite;
+  text-align: center;
+  padding: 1rem;
 }
 
 .feedback-text {
   position: absolute;
-  top: 2rem;
+  top: 3.5rem;
   left: 50%;
   transform: translateX(-50%);
   color: #e0e0e0;
@@ -521,56 +531,29 @@ export default {
   stroke: currentColor;
 }
 
-.hold-target {
-  background-color: #ff6b00;
-  animation: pulse 2s infinite;
-  transition: all 0.2s ease-in-out;
+.success-animation {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 25;
+  pointer-events: none;
 }
 
-.hold-target.held {
-  background-color: #e66000;
-  transform: scale(0.9);
-  animation: none;
-}
-
-.hold-indicator {
-  color: rgba(255, 255, 255, 0.7);
-  width: 60%;
-  height: 60%;
-  animation: fadeInOut 2s infinite;
-}
-
-.hold-indicator svg {
-  width: 100%;
-  height: 100%;
-  stroke: currentColor;
-}
-
-.hold-progress-ring {
-  width: 80%;
-  height: 80%;
-}
-
-.hold-progress-ring svg {
-  width: 100%;
-  height: 100%;
-  transform: rotate(-90deg);
-}
-
-.progress-bg {
-  fill: none;
-  stroke: rgba(255, 255, 255, 0.2);
+.checkmark-small {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: block;
   stroke-width: 3;
-}
-
-.progress-meter {
-  fill: none;
-  stroke: white;
-  stroke-width: 3;
-  stroke-linecap: round;
+  stroke: #fff;
+  stroke-miterlimit: 10;
+  box-shadow: inset 0px 0px 0px #28a745;
+  animation: fill .4s ease-in-out forwards, scale .3s ease-in-out .2s both;
 }
 
 .controls-bar {
@@ -602,45 +585,6 @@ export default {
 .action-button.success {
   background-color: #28a745;
   color: #fff;
-}
-
-/* Completion Animation */
-.completion-animation {
-  z-index: 50;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  height: 100%;
-}
-
-.checkmark-circle {
-  stroke-dasharray: 166;
-  stroke-dashoffset: 166;
-  stroke-width: 3;
-  stroke-miterlimit: 10;
-  stroke: #28a745;
-  fill: none;
-  animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
-}
-
-.checkmark {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  display: block;
-  stroke-width: 3;
-  stroke: #fff;
-  stroke-miterlimit: 10;
-  box-shadow: inset 0px 0px 0px #28a745;
-  animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both;
-}
-
-.checkmark-check {
-  transform-origin: 50% 50%;
-  stroke-dasharray: 48;
-  stroke-dashoffset: 48;
-  animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
 }
 
 @keyframes stroke {
