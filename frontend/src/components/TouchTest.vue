@@ -35,24 +35,24 @@
       <div class="challenge-area">
         <!-- Tap Challenge -->
         <div v-if="stage === 'tap'" class="target-container">
-          <div class="target tap-target" :style="tapTargetStyle"></div>
+          <div class="target tap-target" :class="{ success: currentChallenge.complete }" :style="tapTargetStyle">
+            <svg v-if="currentChallenge.complete" class="target-checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+              <path class="checkmark-check" fill="none" stroke="white" stroke-width="3" d="M4 12l5 5L20 7"/>
+            </svg>
+          </div>
         </div>
 
         <!-- Drag Challenge -->
         <div v-if="stage === 'drag'" class="target-container">
-          <div class="target drag-target-area" :style="dragTargetStyle"></div>
+          <div class="target drag-target-area" :class="{ success: currentChallenge.complete }" :style="dragTargetStyle">
+            <svg v-if="currentChallenge.complete" class="target-checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+              <path class="checkmark-check" fill="none" stroke="white" stroke-width="3" d="M4 12l5 5L20 7"/>
+            </svg>
+          </div>
           <div class="target drag-source" :style="dragSourceStyle"></div>
           <div class="drag-indicator" :style="dragIndicatorStyle">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
           </div>
-        </div>
-
-        <!-- Success Animation -->
-        <div v-if="currentChallenge.complete" class="success-animation">
-          <svg class="checkmark-small" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
-            <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
-            <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
-          </svg>
         </div>
       </div>
     </div>
@@ -250,7 +250,7 @@ export default {
       
       this.successTimer = setTimeout(() => {
         this.setupNextChallenge();
-      }, 800);
+      }, 400);
     },
     
     clearSuccessTimer() {
@@ -495,22 +495,39 @@ export default {
 .target {
   position: absolute;
   border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .tap-target {
-  background-color: #ff6b00;
-  box-shadow: 0 0 20px #ff6b00;
-  animation: pulse 2s infinite;
-  transition: all 0.2s ease-in-out;
+  background: #ff6b00;
+  border: 2px solid #ff6b00;
 }
 
-.drag-source {
-  background-color: #ff6b00;
-  z-index: 10;
+.tap-target.success {
+  background: #28a745;
+  border-color: #28a745;
+  transform: scale(1.1);
 }
 
 .drag-target-area {
-  border: 3px dashed #666;
+  border: 2px dashed #ff6b00;
+  background: transparent;
+}
+
+.drag-target-area.success {
+  border-style: solid;
+  border-color: #28a745;
+  background: #28a745;
+  transform: scale(1.1);
+}
+
+.drag-source {
+  background: #ff6b00;
+  z-index: 2;
 }
 
 .drag-indicator {
@@ -531,29 +548,37 @@ export default {
   stroke: currentColor;
 }
 
-.success-animation {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 25;
-  pointer-events: none;
+.target-checkmark {
+  width: 24px;
+  height: 24px;
+  animation: checkmark-pop 0.2s ease-out forwards;
 }
 
-.checkmark-small {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  display: block;
-  stroke-width: 3;
-  stroke: #fff;
-  stroke-miterlimit: 10;
-  box-shadow: inset 0px 0px 0px #28a745;
-  animation: fill .4s ease-in-out forwards, scale .3s ease-in-out .2s both;
+.checkmark-check {
+  stroke-dasharray: 48;
+  stroke-dashoffset: 48;
+  animation: checkmark-stroke 0.2s cubic-bezier(0.65, 0, 0.45, 1) 0.1s forwards;
+}
+
+.tap-target.success, .drag-target-area.success {
+  transition: all 0.2s ease;
+}
+
+@keyframes checkmark-pop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes checkmark-stroke {
+  100% {
+    stroke-dashoffset: 0;
+  }
 }
 
 .controls-bar {
