@@ -304,11 +304,11 @@ export default {
   margin: 2rem auto;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.5rem;
   background: #2c2c2e;
   border-radius: 12px;
   border: 1px solid #333;
-  padding: 2rem;
+  padding: 1.5rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
   box-sizing: border-box;
 }

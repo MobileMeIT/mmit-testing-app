@@ -40,9 +40,9 @@
       </div>
 
       <!-- Main Camera View -->
-      <div v-else>
-        <div class="camera-view">
-          <div class="video-container">
+      <div v-else class="camera-view">
+        <div class="video-container">
+          <div class="video-wrapper">
             <div v-if="loading" class="video-overlay loading">
               <div class="spinner"></div>
               <p>Initializing camera...</p>
@@ -388,7 +388,7 @@ export default {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  background-color: #252526;
+  background-color: #1e1e1e;
   border-radius: 8px;
   overflow: hidden;
   position: relative;
@@ -438,32 +438,39 @@ export default {
 /* --- Main Camera View --- */
 .camera-view {
   width: 100%;
-  max-width: 600px;
-  margin: 1rem auto;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  background: #1e1e1e;
-  border-radius: 8px;
-  border: 1px solid #333;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  align-items: center;
 }
 
 .video-container {
-  position: relative;
-  background-color: #000;
+  width: 100%;
+  max-width: 600px;
+  margin: 2rem auto;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  aspect-ratio: 16/9;
-  overflow: hidden;
+  flex-direction: column;
+  gap: 1.5rem;
+  background: #2c2c2e;
+  border-radius: 12px;
+  border: 1px solid #333;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.video-wrapper {
+  width: 100%;
+  background: #141414;
   border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  aspect-ratio: 16/9;
 }
 
 .camera-preview {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  transition: filter 0.3s ease;
 }
 
 .camera-preview.blurred {
@@ -472,39 +479,30 @@ export default {
 
 .video-overlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 10;
+  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
   color: #fff;
   text-align: center;
-  padding: 1rem;
+  padding: 2rem;
 }
-
-.video-overlay.error .panel-icon {
-  margin-bottom: 0.5rem;
-}
-
 
 /* --- Controls Bar --- */
 .controls-bar {
-  flex-shrink: 0;
+  width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 1.5rem;
   padding: 1rem;
-  width: 100%;
   background-color: #2c2c2e;
   border-top: 1px solid #444;
+  margin-top: auto;
 }
-
 
 /* --- Common Elements --- */
 .action-button {
@@ -530,6 +528,7 @@ export default {
 .action-button.primary {
   background-color: #ff6b00;
 }
+
 .action-button.primary:hover {
   background-color: #e65c00;
 }
@@ -537,6 +536,7 @@ export default {
 .action-button.success {
   background-color: #28a745;
 }
+
 .action-button.success:hover {
   background-color: #218838;
 }
@@ -544,6 +544,7 @@ export default {
 .action-button.danger {
   background-color: #dc3545;
 }
+
 .action-button.danger:hover {
   background-color: #c82333;
 }
@@ -559,33 +560,33 @@ export default {
 }
 
 @keyframes spin {
+  from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
 
 .camera-selector {
-  padding: 1rem;
+  padding: 1rem 0 0 0;
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 1rem;
-  background: #1e1e1e;
   border-top: 1px solid #333;
 }
 
 .camera-selector label {
   color: #e0e0e0;
   font-size: 0.95rem;
+  min-width: 100px;
 }
 
 .camera-selector select {
+  flex: 1;
   padding: 0.5rem;
   border-radius: 4px;
   border: 1px solid #444;
-  background: #2c2c2e;
+  background: #1a1a1a;
   color: #e0e0e0;
   font-size: 0.95rem;
   cursor: pointer;
-  min-width: 200px;
 }
 
 .camera-selector select:disabled {
@@ -599,7 +600,7 @@ export default {
 }
 
 .camera-selector select option {
-  background: #2c2c2e;
+  background: #1a1a1a;
   color: #e0e0e0;
 }
 </style> 
