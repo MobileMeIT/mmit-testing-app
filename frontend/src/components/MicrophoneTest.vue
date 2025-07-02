@@ -58,6 +58,7 @@
       <!-- Main Mic View -->
       <div v-else class="mic-view">
         <div class="visualizer-container">
+          <canvas ref="waveformCanvas" class="waveform-display"></canvas>
           <div class="volume-meter">
             <div class="volume-bar" :style="{ width: volumeLevel + '%' }"></div>
           </div>
@@ -91,7 +92,11 @@ export default {
       error: null,
       volumeLevel: 0,
       animationFrame: null,
-      checkingPermission: true
+      checkingPermission: true,
+      waveformDataArray: null,
+      canvasCtx: null,
+      canvasWidth: 0,
+      canvasHeight: 0
     }
   },
   mounted() {
@@ -194,7 +199,15 @@ export default {
         const source = this.audioContext.createMediaStreamSource(this.stream)
         source.connect(this.analyser)
         
-        this.analyser.fftSize = 256
+        this.analyser.fftSize = 2048 // Increased for better waveform resolution
+        this.waveformDataArray = new Uint8Array(this.analyser.frequencyBinCount)
+        
+        // Setup canvas
+        const canvas = this.$refs.waveformCanvas
+        this.canvasCtx = canvas.getContext('2d')
+        this.resizeCanvas()
+        window.addEventListener('resize', this.resizeCanvas)
+        
         this.startVolumeMonitoring()
         this.loading = false
       } catch (err) {
@@ -204,25 +217,70 @@ export default {
       }
     },
 
+    resizeCanvas() {
+      const canvas = this.$refs.waveformCanvas
+      if (!canvas) return
+      
+      canvas.width = canvas.offsetWidth * window.devicePixelRatio
+      canvas.height = canvas.offsetHeight * window.devicePixelRatio
+      this.canvasWidth = canvas.width
+      this.canvasHeight = canvas.height
+      
+      if (this.canvasCtx) {
+        this.canvasCtx.scale(window.devicePixelRatio, window.devicePixelRatio)
+      }
+    },
+
     startVolumeMonitoring() {
-      const dataArray = new Uint8Array(this.analyser.frequencyBinCount)
+      const updateVisuals = () => {
+        if (!this.analyser || !this.canvasCtx) return
 
-      const updateVolume = () => {
-        if (!this.analyser) return
-
-        this.analyser.getByteTimeDomainData(dataArray);
-        let sumSquares = 0.0;
-        for (const amplitude of dataArray) {
-            const val = (amplitude / 128.0) - 1.0;
-            sumSquares += val * val;
+        // Update volume bar
+        this.analyser.getByteTimeDomainData(this.waveformDataArray)
+        let sumSquares = 0.0
+        for (const amplitude of this.waveformDataArray) {
+          const val = (amplitude / 128.0) - 1.0
+          sumSquares += val * val
         }
-        const rms = Math.sqrt(sumSquares / dataArray.length);
-        this.volumeLevel = rms * 100 * 2; // Multiplier for better visualization
+        const rms = Math.sqrt(sumSquares / this.waveformDataArray.length)
+        this.volumeLevel = rms * 100 * 2 // Multiplier for better visualization
 
-        this.animationFrame = requestAnimationFrame(updateVolume)
+        // Draw waveform
+        const canvas = this.$refs.waveformCanvas
+        const ctx = this.canvasCtx
+        const width = canvas.offsetWidth
+        const height = canvas.offsetHeight
+        
+        ctx.fillStyle = '#1a1a1a'
+        ctx.fillRect(0, 0, width, height)
+        
+        ctx.lineWidth = 2
+        ctx.strokeStyle = '#ff9800'
+        ctx.beginPath()
+        
+        const sliceWidth = width / this.waveformDataArray.length
+        let x = 0
+        
+        for (let i = 0; i < this.waveformDataArray.length; i++) {
+          const v = this.waveformDataArray[i] / 128.0
+          const y = v * height / 2
+          
+          if (i === 0) {
+            ctx.moveTo(x, y)
+          } else {
+            ctx.lineTo(x, y)
+          }
+          
+          x += sliceWidth
+        }
+        
+        ctx.lineTo(width, height / 2)
+        ctx.stroke()
+
+        this.animationFrame = requestAnimationFrame(updateVisuals)
       }
 
-      updateVolume()
+      updateVisuals()
     },
 
     completeTest() {
@@ -248,14 +306,21 @@ export default {
         cancelAnimationFrame(this.animationFrame)
         this.animationFrame = null
       }
+      
+      window.removeEventListener('resize', this.resizeCanvas)
+      
       if (this.stream) {
         this.stream.getTracks().forEach(track => track.stop())
         this.stream = null
       }
+      
       if (this.audioContext) {
         this.audioContext.close()
         this.audioContext = null
       }
+      
+      this.analyser = null
+      this.canvasCtx = null
     }
   }
 }
@@ -297,7 +362,7 @@ export default {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  background-color: #252526;
+  background-color: #1e1e1e;
   border-radius: 8px;
   overflow: hidden;
   position: relative;
@@ -350,50 +415,61 @@ export default {
   height: 100%;
   display: flex;
   flex-direction: column;
+  align-items: center;
 }
 
 .visualizer-container {
-  flex-grow: 1;
+  width: 100%;
+  max-width: 600px;
+  margin: 2rem auto;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  padding: 2rem;
-  background: #1e1e1e;
-  margin: 1rem;
-  border-radius: 8px;
+  gap: 1.5rem;
+  background: #2c2c2e;
+  border-radius: 12px;
   border: 1px solid #333;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.waveform-display {
+  width: 100%;
+  height: 120px;
+  background: #141414;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  aspect-ratio: 16/9;
 }
 
 .volume-meter {
   width: 100%;
-  max-width: 600px;
-  height: 40px;
-  background-color: #333;
-  border-radius: 20px;
+  height: 8px;
+  background: #141414;
+  border-radius: 4px;
   overflow: hidden;
   position: relative;
-  border: 1px solid #444;
 }
 
 .volume-bar {
   height: 100%;
-  background-color: #28a745;
-  transition: width 0.1s ease;
-  border-radius: 20px;
+  background: #ff9800;
+  transition: width 0.1s ease-out;
+  border-radius: 4px;
+  box-shadow: 0 0 10px rgba(255, 152, 0, 0.3);
 }
 
 /* --- Controls Bar --- */
 .controls-bar {
-  flex-shrink: 0;
+  width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 1.5rem;
   padding: 1rem;
-  width: 100%;
   background-color: #2c2c2e;
   border-top: 1px solid #444;
+  margin-top: auto;
 }
 
 /* --- Common Elements --- */
@@ -449,6 +525,7 @@ export default {
 }
 
 @keyframes spin {
+  from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
 </style>
