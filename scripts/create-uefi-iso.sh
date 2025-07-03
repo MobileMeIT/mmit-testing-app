@@ -1,31 +1,23 @@
 #!/bin/bash
-# UEFI-Compatible Electron ISO Creator
+# UEFI-Compatible Electron ISO Creator (hardcoded for MMIT Testing App)
 # Based on electron-iso-packager with UEFI enhancements
 # Inspired by: https://www.parkytowers.me.uk/thin/Linux/TinycoreUEFI.shtml
 
 set -e
 
-APP_DIR="$1"
-APP_NAME="$2"
-SPLASH_IMAGE="$3"
-OUTPUT_ISO="$4"
-
-if [ -z "$APP_DIR" ] || [ -z "$APP_NAME" ]; then
-    echo "Usage: $0 <app_directory> <app_name> [splash_image] [output_iso]"
-    echo "Example: $0 ./ 'MMIT Testing App' splash.jpg MMITTestingApp-UEFI.iso"
-    exit 1
-fi
+# Hardcoded parameters
+APP_DIR="./"
+APP_NAME="MMIT Testing App"
+SPLASH_IMAGE=""  # No splash image, use default (black screen)
+OUTPUT_ISO="MMITTestingApp-UEFI.iso"
 
 # Function to safely convert app name to hostname
 safe_hostname() {
     local name="$1"
     # Convert to lowercase, replace spaces and special chars with dashes, remove consecutive dashes
-    echo "$name" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/-\+/-/g' | sed 's/^-\|-$//g'
+    echo "$name" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/-\+/-/g' | sed 's/^\-|-$//g'
 }
 
-# Set defaults
-SPLASH_IMAGE=${SPLASH_IMAGE:-""}
-OUTPUT_ISO=${OUTPUT_ISO:-"${APP_NAME// /-}-UEFI.iso"}
 SAFE_HOSTNAME=$(safe_hostname "$APP_NAME")
 
 echo "Creating UEFI-compatible ISO for $APP_NAME..."
@@ -33,6 +25,8 @@ echo "Creating UEFI-compatible ISO for $APP_NAME..."
 # Validate dependencies
 echo "Checking dependencies..."
 MISSING_DEPS=()
+APT_DEPS=(p7zip-full wget syslinux-efi syslinux-utils genisoimage isolinux)
+NPM_DEPS=(electron-iso-packager)
 
 for cmd in npx 7z wget extlinux genisoimage; do
     if ! command -v "$cmd" &> /dev/null; then
@@ -46,11 +40,30 @@ if ! command -v isohybrid &> /dev/null; then
 fi
 
 if [ ${#MISSING_DEPS[@]} -ne 0 ]; then
-    echo "Error: Missing dependencies: ${MISSING_DEPS[*]}"
-    echo "Please install missing dependencies:"
-    echo "  sudo apt install -y p7zip-full wget syslinux-efi syslinux-utils genisoimage isolinux"
-    echo "  npm install -g electron-iso-packager"
-    exit 1
+    echo "Missing dependencies: ${MISSING_DEPS[*]}"
+    echo "Attempting to install missing dependencies..."
+    # Install apt dependencies
+    sudo apt update
+    sudo apt install -y ${APT_DEPS[*]}
+    # Install npm dependencies
+    if ! command -v npm &> /dev/null; then
+        echo "npm not found. Installing npm..."
+        sudo apt install -y npm
+    fi
+    for pkg in "${NPM_DEPS[@]}"; do
+        if ! npm list -g --depth=0 | grep -q "$pkg"; then
+            echo "Installing $pkg globally via npm..."
+            sudo npm install -g "$pkg"
+        fi
+    done
+    # Re-check dependencies after install
+    for cmd in npx 7z wget extlinux genisoimage; do
+        if ! command -v "$cmd" &> /dev/null; then
+            echo "Error: $cmd is still missing after attempted install. Please check your system."
+            exit 1
+        fi
+    done
+    echo "All dependencies installed. Continuing..."
 fi
 
 # Create working directory
