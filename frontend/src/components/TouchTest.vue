@@ -9,64 +9,64 @@
     </div>
 
     <div class="container">
-      <div class="test-area"
-        @touchstart.prevent="handlePointerDown" 
-        @touchmove.prevent="handlePointerMove" 
-        @touchend.prevent="handlePointerUp"
-        @mousedown.prevent="handlePointerDown" 
-        @mousemove.prevent="handlePointerMove" 
-        @mouseup.prevent="handlePointerUp"
-        @mouseleave="handleMouseLeave">
-        
-        <div v-if="stage !== 'idle'" class="progress-indicator">
-          <div class="progress-text">{{ completedChallenges }} challenges completed</div>
-          <div class="progress-bar">
-            <div class="progress-fill" :style="{ width: `${Math.min(completedChallenges * (100/5), 100)}%` }"></div>
-          </div>
+    <div class="test-area"
+      @touchstart.prevent="handlePointerDown" 
+      @touchmove.prevent="handlePointerMove" 
+      @touchend.prevent="handlePointerUp"
+      @mousedown.prevent="handlePointerDown" 
+      @mousemove.prevent="handlePointerMove" 
+      @mouseup.prevent="handlePointerUp"
+      @mouseleave="handleMouseLeave">
+      
+      <div v-if="stage !== 'idle'" class="progress-indicator">
+        <div class="progress-text">{{ completedChallenges }} challenges completed</div>
+        <div class="progress-bar">
+          <div class="progress-fill" :style="{ width: `${Math.min(completedChallenges * (100/5), 100)}%` }"></div>
         </div>
-        
-        <div v-if="stage !== 'idle'" class="feedback-text" :class="{ success: currentChallenge.complete }">
-          {{ feedbackText }}
-        </div>
-        
-        <div v-if="stage === 'idle'" class="start-prompt">
-          <div class="tap-instruction">Tap anywhere to begin</div>
-        </div>
-        
-        <div class="challenge-area">
-          <!-- Tap Challenge -->
-          <div v-if="stage === 'tap'" class="target-container">
+      </div>
+      
+      <div v-if="stage !== 'idle'" class="feedback-text" :class="{ success: currentChallenge.complete }">
+        {{ feedbackText }}
+      </div>
+      
+      <div v-if="stage === 'idle'" class="start-prompt">
+        <div class="tap-instruction">Tap anywhere to begin</div>
+      </div>
+      
+      <div class="challenge-area">
+        <!-- Tap Challenge -->
+        <div v-if="stage === 'tap'" class="target-container">
             <div class="target tap-target" :class="{ success: currentChallenge.complete }" :style="tapTargetStyle">
               <svg v-if="currentChallenge.complete" class="target-checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                 <path class="checkmark-check" fill="none" stroke="white" stroke-width="3" d="M4 12l5 5L20 7"/>
               </svg>
             </div>
-          </div>
+        </div>
 
-          <!-- Drag Challenge -->
-          <div v-if="stage === 'drag'" class="target-container">
+        <!-- Drag Challenge -->
+        <div v-if="stage === 'drag'" class="target-container">
             <div class="target drag-target-area" :class="{ success: currentChallenge.complete }" :style="dragTargetStyle">
               <svg v-if="currentChallenge.complete" class="target-checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                 <path class="checkmark-check" fill="none" stroke="white" stroke-width="3" d="M4 12l5 5L20 7"/>
               </svg>
             </div>
-            <div class="target drag-source" :style="dragSourceStyle"></div>
-            <div class="drag-indicator" :style="dragIndicatorStyle">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-            </div>
+          <div class="target drag-source" :style="dragSourceStyle"></div>
+          <div class="drag-indicator" :style="dragIndicatorStyle">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
           </div>
         </div>
       </div>
+    </div>
 
       <div class="controls">
-        <button @click="failTest" class="action-button danger">
+      <button @click="failTest" class="action-button danger">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-x"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-          <span>Not Working</span>
-        </button>
-        <button @click="completeTest" class="action-button success">
+        <span>Not Working</span>
+      </button>
+      <button @click="completeTest" class="action-button success">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-check"><polyline points="20 6 9 17 4 12"></polyline></svg>
-          <span>Working</span>
-        </button>
+        <span>Working</span>
+      </button>
       </div>
     </div>
   </div>
