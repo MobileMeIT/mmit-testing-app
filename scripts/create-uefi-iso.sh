@@ -16,9 +16,17 @@ if [ -z "$APP_DIR" ] || [ -z "$APP_NAME" ]; then
     exit 1
 fi
 
+# Function to safely convert app name to hostname
+safe_hostname() {
+    local name="$1"
+    # Convert to lowercase, replace spaces and special chars with dashes, remove consecutive dashes
+    echo "$name" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/-\+/-/g' | sed 's/^-\|-$//g'
+}
+
 # Set defaults
 SPLASH_IMAGE=${SPLASH_IMAGE:-""}
 OUTPUT_ISO=${OUTPUT_ISO:-"${APP_NAME// /-}-UEFI.iso"}
+SAFE_HOSTNAME=$(safe_hostname "$APP_NAME")
 
 echo "Creating UEFI-compatible ISO for $APP_NAME..."
 
@@ -58,6 +66,8 @@ cleanup() {
     echo "Cleaning up temporary files..."
     rm -rf "$WORK_DIR"
     rm -f temp-base.iso
+    # Note: TinyCore ISO is kept for reuse in future runs
+    # rm -f TinyCorePure64-*.iso  # Uncomment to remove TinyCore ISO cache
 }
 trap cleanup EXIT
 
@@ -95,9 +105,18 @@ echo "Backend is ready (Node.js - no build required)"
 
 # Step 2: Run standard electron-iso-packager first
 echo "Building base Electron app..."
-if ! npx electron-iso-packager "$APP_DIR" "$APP_NAME" "$SPLASH_IMAGE" temp-base.iso; then
-    echo "Error: electron-iso-packager failed"
-    exit 1
+if [ -n "$SPLASH_IMAGE" ] && [ -f "$SPLASH_IMAGE" ]; then
+    echo "Using splash image: $SPLASH_IMAGE"
+    if ! npx electron-iso-packager "$APP_DIR" "$APP_NAME" "$SPLASH_IMAGE" temp-base.iso; then
+        echo "Error: electron-iso-packager failed"
+        exit 1
+    fi
+else
+    echo "No splash image provided, using default"
+    if ! npx electron-iso-packager "$APP_DIR" "$APP_NAME" temp-base.iso; then
+        echo "Error: electron-iso-packager failed"
+        exit 1
+    fi
 fi
 
 if [ ! -f "temp-base.iso" ]; then
@@ -130,19 +149,28 @@ fi
 
 # Step 5: Download TinyCorePure64 for UEFI kernel
 echo "Downloading UEFI-compatible TinyCore kernel..."
-TINYCORE_ISO="TinyCorePure64-current.iso"
-if [ ! -f "$TINYCORE_ISO" ]; then
+TINYCORE_ISO=""
+if [ -f "TinyCorePure64-16.0.iso" ]; then
+    TINYCORE_ISO="TinyCorePure64-16.0.iso"
+    echo "Using existing TinyCore Linux 16.0"
+elif [ -f "TinyCorePure64-15.0.iso" ]; then
+    TINYCORE_ISO="TinyCorePure64-15.0.iso"
+    echo "Using existing TinyCore Linux 15.0"
+else
     echo "Downloading TinyCore Linux..."
-    if ! wget -q --show-progress "http://tinycorelinux.net/16.x/x86_64/release/TinyCorePure64-16.0.iso"; then
+    if wget --progress=bar:force "http://tinycorelinux.net/16.x/x86_64/release/TinyCorePure64-16.0.iso" 2>/dev/null; then
+        TINYCORE_ISO="TinyCorePure64-16.0.iso"
+        echo "Downloaded TinyCore Linux 16.0"
+    else
         echo "Error: Failed to download TinyCore ISO"
         echo "Trying fallback URL..."
-        if ! wget -q --show-progress "http://tinycorelinux.net/15.x/x86_64/release/TinyCorePure64-15.0.iso"; then
+        if wget --progress=bar:force "http://tinycorelinux.net/15.x/x86_64/release/TinyCorePure64-15.0.iso" 2>/dev/null; then
+            TINYCORE_ISO="TinyCorePure64-15.0.iso"
+            echo "Downloaded TinyCore Linux 15.0 (fallback)"
+        else
             echo "Error: Failed to download TinyCore ISO from fallback URL"
             exit 1
         fi
-        mv "TinyCorePure64-15.0.iso" "$TINYCORE_ISO"
-    else
-        mv "TinyCorePure64-16.0.iso" "$TINYCORE_ISO"
     fi
 fi
 
@@ -219,9 +247,13 @@ echo "Creating UEFI boot configuration..."
 # Prepare splash background line
 SPLASH_LINE=""
 if [ -n "$SPLASH_IMAGE" ] && [ -f "$SPLASH_IMAGE" ]; then
-    # Copy splash image to ISO
-    cp "$SPLASH_IMAGE" "$ISO_DIR/splash.jpg"
-    SPLASH_LINE="menu background splash.jpg"
+    # Get the file extension
+    SPLASH_EXT="${SPLASH_IMAGE##*.}"
+    SPLASH_FILENAME="splash.$SPLASH_EXT"
+    
+    # Copy splash image to ISO with original extension
+    cp "$SPLASH_IMAGE" "$ISO_DIR/$SPLASH_FILENAME"
+    SPLASH_LINE="menu background $SPLASH_FILENAME"
 fi
 
 cat > "$ISO_DIR/syslinux.cfg" << EOF
@@ -237,19 +269,19 @@ LABEL mmit
 MENU LABEL $APP_NAME
 KERNEL /vmlinuz64
 INITRD /core64.gz
-APPEND quiet loglevel=3 noswap tce=LABEL kmap=qwerty/us host=${APP_NAME// /-}
+APPEND quiet loglevel=3 noswap tce=LABEL kmap=qwerty/us host=${SAFE_HOSTNAME}
 
 LABEL mmit-safe
 MENU LABEL $APP_NAME (Safe Mode)
 KERNEL /vmlinuz64
 INITRD /core64.gz
-APPEND quiet loglevel=3 noswap tce=LABEL vga=normal nomodeset acpi=off host=${APP_NAME// /-}
+APPEND quiet loglevel=3 noswap tce=LABEL vga=normal nomodeset acpi=off host=${SAFE_HOSTNAME}
 
 LABEL mmit-debug
 MENU LABEL $APP_NAME (Debug Mode)
 KERNEL /vmlinuz64
 INITRD /core64.gz
-APPEND loglevel=7 debug tce=LABEL host=${APP_NAME// /-}
+APPEND loglevel=7 debug tce=LABEL host=${SAFE_HOSTNAME}
 EOF
 
 # Copy syslinux.cfg to EFI/BOOT directory as well
@@ -283,19 +315,19 @@ LABEL mmit
 MENU LABEL $APP_NAME
 KERNEL /vmlinuz64
 INITRD /core64.gz
-APPEND quiet loglevel=3 noswap tce=LABEL kmap=qwerty/us host=${APP_NAME// /-}
+APPEND quiet loglevel=3 noswap tce=LABEL kmap=qwerty/us host=${SAFE_HOSTNAME}
 
 LABEL mmit-safe
 MENU LABEL $APP_NAME (Safe Mode)
 KERNEL /vmlinuz64
 INITRD /core64.gz
-APPEND quiet loglevel=3 noswap tce=LABEL vga=normal nomodeset acpi=off host=${APP_NAME// /-}
+APPEND quiet loglevel=3 noswap tce=LABEL vga=normal nomodeset acpi=off host=${SAFE_HOSTNAME}
 
 LABEL mmit-debug
 MENU LABEL $APP_NAME (Debug Mode)
 KERNEL /vmlinuz64
 INITRD /core64.gz
-APPEND loglevel=7 debug tce=LABEL host=${APP_NAME// /-}
+APPEND loglevel=7 debug tce=LABEL host=${SAFE_HOSTNAME}
 EOF
     fi
 fi
@@ -324,11 +356,14 @@ fi
 ISO_OPTS+=(
     -e EFI/BOOT/BOOTX64.EFI
     -no-emul-boot
-    -isohybrid-gpt-basdat
-    "$ISO_DIR"
 )
 
-if ! genisoimage "${ISO_OPTS[@]}"; then
+# Try with GPT support first, fallback if not supported
+if genisoimage "${ISO_OPTS[@]}" -isohybrid-gpt-basdat "$ISO_DIR" 2>/dev/null; then
+    echo "ISO created with GPT support"
+elif genisoimage "${ISO_OPTS[@]}" "$ISO_DIR"; then
+    echo "ISO created without GPT support (fallback)"
+else
     echo "Error: ISO creation failed"
     exit 1
 fi
