@@ -32,10 +32,15 @@ for cmd in npx 7z wget extlinux genisoimage; do
     fi
 done
 
+# Also check for isohybrid (optional but recommended)
+if ! command -v isohybrid &> /dev/null; then
+    echo "Note: isohybrid not found - ISO will still work but won't be optimized for USB boot"
+fi
+
 if [ ${#MISSING_DEPS[@]} -ne 0 ]; then
     echo "Error: Missing dependencies: ${MISSING_DEPS[*]}"
     echo "Please install missing dependencies:"
-    echo "  sudo apt install -y p7zip-full wget syslinux-efi syslinux-utils genisoimage"
+    echo "  sudo apt install -y p7zip-full wget syslinux-efi syslinux-utils genisoimage isolinux"
     echo "  npm install -g electron-iso-packager"
     exit 1
 fi
@@ -66,7 +71,21 @@ fi
 # Build the app properly
 echo "Building frontend..."
 if [ -d "frontend" ]; then
-    cd frontend && npm run build && cd ..
+    # Save current directory and change to frontend
+    ORIGINAL_DIR=$(pwd)
+    if cd frontend; then
+        if npm run build; then
+            echo "Frontend build successful"
+        else
+            echo "Error: Frontend build failed"
+            cd "$ORIGINAL_DIR"
+            exit 1
+        fi
+        cd "$ORIGINAL_DIR"
+    else
+        echo "Error: Failed to enter frontend directory"
+        exit 1
+    fi
 else
     echo "Warning: frontend directory not found, skipping frontend build"
 fi
@@ -96,7 +115,14 @@ fi
 # Step 4: Copy base files to new structure
 echo "Setting up UEFI boot structure..."
 if [ -d "$WORK_DIR/base" ]; then
-    cp -r "$WORK_DIR/base/"* "$ISO_DIR/" 2>/dev/null || true
+    # Check if there are files to copy
+    if [ "$(ls -A "$WORK_DIR/base" 2>/dev/null)" ]; then
+        cp -r "$WORK_DIR/base/"* "$ISO_DIR/" 2>/dev/null || {
+            echo "Warning: Some base files could not be copied"
+        }
+    else
+        echo "Warning: Base ISO appears to be empty"
+    fi
 else
     echo "Error: Base ISO extraction failed"
     exit 1

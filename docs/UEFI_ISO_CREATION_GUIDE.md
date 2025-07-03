@@ -37,6 +37,7 @@ npm install -g electron-iso-packager
 npx electron-iso-packager --version
 7z --help > /dev/null && echo "7z: OK"
 genisoimage --version > /dev/null && echo "genisoimage: OK"
+extlinux --version > /dev/null && echo "extlinux: OK" || echo "extlinux: WARNING"
 ```
 
 ## Step 2: Prepare Your App
@@ -47,8 +48,12 @@ First, ensure your Electron app is built and ready:
 # Install all dependencies
 npm run install:all
 
-# Build the frontend (Vue.js app)
-cd frontend && npm run build && cd ..
+# Build the frontend (Vue.js app) safely
+if [ -d "frontend" ]; then
+    (cd frontend && npm run build)
+else
+    echo "Warning: frontend directory not found"
+fi
 
 # Backend is ready (Node.js - no build step required)
 # The backend runs directly from source files
