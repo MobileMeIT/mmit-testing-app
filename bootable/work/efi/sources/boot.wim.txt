@@ -1,3 +1,0 @@
-[UEFI.Boot]
-Format=FAT32
-Label=HTESTAPP
