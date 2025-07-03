@@ -13,6 +13,8 @@ OUTPUT_ISO="$BOOTABLE_DIR/hardware-test-live.iso"
 echo "Creating ISO directory structure..."
 mkdir -p "$ISO_DIR/live"
 mkdir -p "$ISO_DIR/isolinux"
+mkdir -p "$ISO_DIR/boot/grub"
+mkdir -p "$ISO_DIR/EFI/BOOT"
 
 echo "Creating squashfs filesystem..."
 mksquashfs "$ROOTFS_DIR" "$ISO_DIR/live/filesystem.squashfs" -comp xz -e boot
@@ -28,8 +30,9 @@ cp "$ROOTFS_DIR/boot/initrd.img-"* "$ISO_DIR/live/initrd" 2>/dev/null || {
     find "$ROOTFS_DIR/boot" -name "initrd*" -exec cp {} "$ISO_DIR/live/initrd" \; -quit
 }
 
-echo "Setting up boot loader..."
-# Copy isolinux files
+echo "Setting up boot loaders..."
+
+# Setup BIOS boot (isolinux)
 cp "$BOOTABLE_DIR/config/isolinux.cfg" "$ISO_DIR/isolinux/"
 
 # Copy isolinux binaries
@@ -60,6 +63,30 @@ if [ -n "$SYSLINUX_MODULES_DIR" ]; then
 else
     echo "Warning: Syslinux modules directory not found"
 fi
+
+# Setup UEFI boot (GRUB)
+echo "Setting up UEFI boot support..."
+cp "$BOOTABLE_DIR/config/grub.cfg" "$ISO_DIR/boot/grub/"
+
+# Create GRUB EFI bootloader
+grub-mkstandalone \
+    --format=x86_64-efi \
+    --output="$ISO_DIR/EFI/BOOT/BOOTX64.EFI" \
+    --locales="" \
+    --fonts="" \
+    "boot/grub/grub.cfg=$ISO_DIR/boot/grub/grub.cfg"
+
+# Create EFI System Partition image
+dd if=/dev/zero of="$ISO_DIR/efiboot.img" bs=1024 count=4096
+mkfs.fat -F 12 -n "EFIBOOT" "$ISO_DIR/efiboot.img"
+
+# Mount and populate EFI image
+mkdir -p "$WORK_DIR/efi_mount"
+mount -o loop "$ISO_DIR/efiboot.img" "$WORK_DIR/efi_mount"
+mkdir -p "$WORK_DIR/efi_mount/EFI/BOOT"
+cp "$ISO_DIR/EFI/BOOT/BOOTX64.EFI" "$WORK_DIR/efi_mount/EFI/BOOT/"
+umount "$WORK_DIR/efi_mount"
+rmdir "$WORK_DIR/efi_mount"
 
 echo "Creating manifest..."
 cat > "$ISO_DIR/live/filesystem.manifest" << EOF
@@ -92,7 +119,7 @@ alsa-utils
 hardware-testing-app
 EOF
 
-echo "Creating ISO image with xorriso..."
+echo "Creating hybrid ISO image with BIOS and UEFI support..."
 xorriso -as mkisofs \
     -iso-level 3 \
     -full-iso9660-filenames \
@@ -102,7 +129,11 @@ xorriso -as mkisofs \
     -no-emul-boot \
     -boot-load-size 4 \
     -boot-info-table \
+    -eltorito-alt-boot \
+    -e efiboot.img \
+    -no-emul-boot \
     -isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin \
+    -isohybrid-gpt-basdat \
     -output "$OUTPUT_ISO" \
     "$ISO_DIR"
 
